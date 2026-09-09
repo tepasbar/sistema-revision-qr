@@ -261,26 +261,63 @@
 
     }
 function seleccionarActividad(id) {
-  google.script.run
-    .withSuccessHandler(function(resultado) {
-      document.getElementById("resultado").innerHTML = `
+
+  const resultadoDiv = document.getElementById("resultado");
+
+  resultadoDiv.innerHTML = `
+    <div class="cargando">
+      Buscando actividad...
+    </div>
+  `;
+
+  const API_URL = "https://script.google.com/macros/s/AKfycbysrXA_7XanrNqWJrNbNCxPYPpkVg_s7kNcQqh-BXaKdFDQxe5VB7vMharGENFR67iR7A/exec";
+
+  fetch(API_URL)
+    .then(response => response.json())
+    .then(actividades => {
+
+      const actividad = actividades.find(a => a.id === id);
+
+      if (!actividad) {
+
+        resultadoDiv.innerHTML = `
+          <div class="error">
+            No se encontró ninguna actividad con el código: ${id}
+          </div>
+        `;
+
+        return;
+      }
+
+      resultadoDiv.innerHTML = `
+
         <button class="boton-regresar" onclick="cargarActividades()">
           ← Regresar a actividades
         </button>
 
         <div class="actividad">
-          <h2>${resultado.actividad}</h2>
+          <h2>${actividad.actividad}</h2>
 
-          <p><strong>Materia:</strong> ${resultado.materia}</p>
+          <p><strong>Materia:</strong> ${actividad.materia}</p>
 
-          <p><strong>Grupo:</strong> ${resultado.grupo}</p>
+          <p><strong>Grupo:</strong> ${actividad.grupo}</p>
 
-          <p><strong>ID:</strong> ${resultado.id}</p>
+          <p><strong>ID:</strong> ${actividad.id}</p>
+        </div>
+
+      `;
+
+    })
+    .catch(error => {
+
+      resultadoDiv.innerHTML = `
+        <div class="error">
+          Error al buscar la actividad: ${error.message}
         </div>
       `;
-    })
-    .withFailureHandler(mostrarError)
-    .obtenerActividadPorId(id);
+
+    });
+
 }
 
     cargarActividades();
