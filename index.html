@@ -273,25 +273,51 @@ async function iniciarEscaner() {
 
   try {
 
-    streamQR = await navigator.mediaDevices.getUserMedia({
-  video: {
-    facingMode: {
-      ideal: "environment"
+    // Detectar si es celular
+    const esMovil = /Android|iPhone|iPad|iPod/i.test(navigator.userAgent);
+
+    let configuracionCamara;
+
+    if (esMovil) {
+
+      // En celular intenta usar la cámara trasera
+      configuracionCamara = {
+        video: {
+          facingMode: {
+            ideal: "environment"
+          }
+        },
+        audio: false
+      };
+
+    } else {
+
+      // En computadora usa cualquier cámara disponible
+      configuracionCamara = {
+        video: true,
+        audio: false
+      };
+
     }
-  },
-  audio: false
-});
+
+    streamQR = await navigator.mediaDevices.getUserMedia(
+      configuracionCamara
+    );
 
     video.srcObject = streamQR;
 
-    mensaje.textContent = "Cámara activada. Apunta al código QR.";
+    await video.play();
+
+    mensaje.textContent =
+      "Cámara activada. Apunta al código QR.";
 
   } catch (error) {
 
-    console.error(error);
+    console.error("Error de cámara:", error);
 
     mensaje.textContent =
-      "No se pudo acceder a la cámara. Verifica los permisos.";
+      "No se pudo acceder a la cámara. " +
+      error.name + ": " + error.message;
 
   }
 
