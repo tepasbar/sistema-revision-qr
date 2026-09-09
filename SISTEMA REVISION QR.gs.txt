@@ -1,0 +1,64 @@
+// ==========================================
+// SISTEMA DE REVISIÓN QR
+// CÓDIGO PRINCIPAL
+// ==========================================
+
+
+// MOSTRAR LA APLICACIÓN WEB
+function doGet() {
+  return HtmlService
+    .createHtmlOutputFromFile('Index')
+    .setTitle('Sistema de Revisión QR');
+}
+
+
+// ==========================================
+// OBTENER ACTIVIDADES
+// ==========================================
+
+function obtenerActividades() {
+  
+  const hoja = SpreadsheetApp
+    .getActiveSpreadsheet()
+    .getSheetByName('ACTIVIDADES');
+
+  if (!hoja) {
+    throw new Error('No se encontró la hoja ACTIVIDADES');
+  }
+
+  const datos = hoja.getDataRange().getValues();
+
+  const actividades = [];
+
+  // Empezamos en 1 para ignorar los encabezados
+  for (let i = 1; i < datos.length; i++) {
+
+    if (datos[i][0] !== '') {
+
+      actividades.push({
+        id: String(datos[i][0]),
+        materia: String(datos[i][1]),
+        grupo: String(datos[i][2]),
+        actividad: String(datos[i][3])
+      });
+
+    }
+  }
+
+  return actividades;
+}
+
+function obtenerActividadPorId(id) {
+  
+  const actividades = obtenerActividades();
+  
+  const actividadEncontrada = actividades.find(function(actividad) {
+    return actividad.id === String(id);
+  });
+  
+  if (!actividadEncontrada) {
+    throw new Error("No se encontró la actividad solicitada.");
+  }
+  
+  return actividadEncontrada;
+}
