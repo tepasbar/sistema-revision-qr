@@ -339,6 +339,44 @@ async function iniciarEscaner() {
     mensaje.textContent =
       "Cámara activada. Apunta hacia el código QR.";
 
+
+const detectorQR = new BarcodeDetector({
+  formats: ["qr_code"]
+});
+
+async function detectarQR() {
+
+  if (!streamQR) return;
+
+  try {
+
+    const codigos = await detectorQR.detect(video);
+
+    if (codigos.length > 0) {
+
+      const codigoDetectado = codigos[0].rawValue;
+
+      mensaje.textContent =
+        "Código detectado: " + codigoDetectado;
+
+      buscarActividadQR(codigoDetectado);
+
+      return;
+
+    }
+
+  } catch (error) {
+
+    console.error("Error leyendo QR:", error);
+
+  }
+
+  requestAnimationFrame(detectarQR);
+
+}
+
+detectarQR();
+  
   } catch (error) {
 
     console.error("Error de cámara:", error);
@@ -370,6 +408,23 @@ function detenerEscaner() {
   contenedor.style.display = "none";
 
 }
+
+    function buscarActividadQR(idQR) {
+
+  idQR = idQR.trim();
+
+  detenerEscaner();
+
+  document.getElementById("resultado").innerHTML = `
+    <div class="cargando">
+      Buscando actividad...
+    </div>
+  `;
+
+  seleccionarActividad(idQR);
+
+}
+    
   </script>
 
 </body>
