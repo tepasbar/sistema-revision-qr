@@ -274,11 +274,13 @@ async function iniciarEscaner() {
   try {
 
     streamQR = await navigator.mediaDevices.getUserMedia({
-      video: {
-        facingMode: "environment"
-      },
-      audio: false
-    });
+  video: {
+    facingMode: {
+      ideal: "environment"
+    }
+  },
+  audio: false
+});
 
     video.srcObject = streamQR;
 
