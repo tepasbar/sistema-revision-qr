@@ -151,7 +151,7 @@
 
   <script>
 
-    function cargarActividades() {
+   function cargarActividades() {
 
   const resultado = document.getElementById("resultado");
 
@@ -161,28 +161,35 @@
   const API_URL = "https://script.google.com/macros/s/AKfycbysrXA_7XanrNqWJrNbNCxPYPpkVg_s7kNcQqh-BXaKdFDQxe5VB7vMharGENFR67iR7A/exec";
 
   fetch(API_URL)
-    .then(response => {
+    .then(function(response) {
 
       if (!response.ok) {
-        throw new Error("Error al conectar con el servidor");
+        throw new Error("No se pudo conectar con el servidor");
       }
 
       return response.json();
 
     })
-    .then(actividades => {
+    .then(function(actividades) {
+
+      console.log("Actividades recibidas:", actividades);
 
       mostrarActividades(actividades);
 
     })
-    .catch(error => {
+    .catch(function(error) {
 
-      mostrarError(error);
+      console.error("Error:", error);
+
+      resultado.innerHTML = `
+        <div class="error">
+          Error al cargar actividades: ${error.message}
+        </div>
+      `;
 
     });
 
 }
-
 
     function mostrarActividades(actividades) {
 
