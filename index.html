@@ -289,23 +289,31 @@ function seleccionarActividad(id) {
         return;
       }
 
-      resultadoDiv.innerHTML = `
+      actividadSeleccionada = actividad;
 
-        <button class="boton-regresar" onclick="cargarActividades()">
-          ← Regresar a actividades
-        </button>
+resultadoDiv.innerHTML = `
 
-        <div class="actividad">
-          <h2>${actividad.actividad}</h2>
+  <button class="boton-regresar" onclick="cargarActividades()">
+    ← Regresar a actividades
+  </button>
 
-          <p><strong>Materia:</strong> ${actividad.materia}</p>
+  <div class="actividad">
 
-          <p><strong>Grupo:</strong> ${actividad.grupo}</p>
+    <h2>${actividad.actividad}</h2>
 
-          <p><strong>ID:</strong> ${actividad.id}</p>
-        </div>
+    <p><strong>Materia:</strong> ${actividad.materia}</p>
 
-      `;
+    <p><strong>Grupo:</strong> ${actividad.grupo}</p>
+
+    <p><strong>ID:</strong> ${actividad.id}</p>
+
+    <button onclick="escanearAlumno()" class="boton-escanear">
+      📷 Escanear alumno
+    </button>
+
+  </div>
+
+`;
 
     })
     .catch(error => {
@@ -326,6 +334,25 @@ function seleccionarActividad(id) {
 var streamQR = null;
 var escaneando = false;
 
+    var actividadSeleccionada = null;
+var modoEscaneo = "actividad";
+
+    function escanearAlumno() {
+
+  if (!actividadSeleccionada) {
+
+    alert("Primero debes seleccionar una actividad.");
+
+    return;
+
+  }
+
+  modoEscaneo = "alumno";
+
+  iniciarEscaner();
+
+}
+    
 async function iniciarEscaner() {
 
   const contenedor = document.getElementById("contenedor-escaner");
@@ -389,18 +416,35 @@ async function detectarQR() {
 
     const codigos = await detectorQR.detect(video);
 
-    if (codigos.length > 0) {
+   if (codigos.length > 0) {
 
-      const codigoDetectado = codigos[0].rawValue;
+const codigoDetectado = codigos[0].rawValue;
 
-      mensaje.textContent =
-        "Código detectado: " + codigoDetectado;
+mensaje.textContent =
 
-      buscarActividadQR(codigoDetectado);
+"Código detectado:
 
-      return;
+codigoDetectado;
 
-    }
++
+
+if (modoEscaneo === "actividad")
+
+{
+
+buscarActividadQR(codigoDetectado) ;
+
+} else if (modoEscaneo ===
+
+"alumno") {
+
+registrarAlumnoQR(codigoDetectado) ;
+
+}
+
+return;
+
+}
 
   } catch (error) {
 
@@ -446,6 +490,22 @@ function detenerEscaner() {
 
 }
 
+    function escanearAlumno() {
+
+  if (!actividadSeleccionada) {
+
+    alert("Primero debes seleccionar una actividad.");
+
+    return;
+
+  }
+
+  modoEscaneo = "alumno";
+
+  iniciarEscaner();
+
+}
+    
     function buscarActividadQR(idQR) {
 
   idQR = idQR.trim();
@@ -460,6 +520,84 @@ function detenerEscaner() {
 
   seleccionarActividad(idQR);
 
+}
+
+    function escanearAlumno() {
+
+  if (!actividadSeleccionada) {
+
+    alert("Primero debes seleccionar una actividad.");
+
+    return;
+
+  }
+
+  modoEscaneo = "alumno";
+
+  iniciarEscaner();
+
+}
+
+function registrarAlumnoQR(codigoAlumno) {
+
+    detenerEscaner();
+
+    document.getElementById("resultado").innerHTML = `
+        <div class="cargando">
+            Registrando alumno...
+        </div>
+    `;
+
+  const API_URL = "https://script.google.com/macros/s/AKfycbysrXA_7XanrNqWJrNbNCxPYPpkVg_s7kNcQqh-BXaKdFDQxe5VB7vMharGENFR67iR7A/exec";
+
+fetch(API_URL, {
+    method: "POST",
+    body: JSON.stringify({
+        alumno: codigoAlumno,
+        actividad: actividadSeleccionada
+    })
+})
+.then(response => response.json())
+.then(datos => {
+
+    if (datos.success) {
+
+        document.getElementById("resultado").innerHTML = `
+            <div class="exito">
+                <h2>✓ Alumno registrado correctamente</h2>
+
+                <p><strong>Alumno:</strong> ${datos.alumno}</p>
+
+                <button onclick="cargarActividades()" class="boton-regresar">
+                    ← Regresar a actividades
+                </button>
+            </div>
+        `;
+
+    } else {
+
+        document.getElementById("resultado").innerHTML = `
+            <div class="error">
+                ${datos.mensaje}
+            </div>
+        `;
+
+    }
+
+})
+.catch(error => {
+
+    document.getElementById("resultado").innerHTML = `
+        <div class="error">
+            Error al registrar al alumno.
+        </div>
+    `;
+
+    console.error(error);
+
+});
+
+    
 }
     
   </script>
