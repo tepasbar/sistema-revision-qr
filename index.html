@@ -259,8 +259,8 @@ function seleccionarActividad(id) {
     cargarActividades();
 
 
-let streamQR = null;
-let escaneando = false;
+var streamQR = null;
+var escaneando = false;
 
 async function iniciarEscaner() {
 
@@ -280,7 +280,7 @@ async function iniciarEscaner() {
 
     if (esMovil) {
 
-      // En celular intenta usar la cámara trasera
+      // En celular intenta usar cámara trasera
       configuracionCamara = {
         video: {
           facingMode: {
@@ -300,6 +300,7 @@ async function iniciarEscaner() {
 
     }
 
+
     streamQR = await navigator.mediaDevices.getUserMedia(
       configuracionCamara
     );
@@ -309,7 +310,7 @@ async function iniciarEscaner() {
     await video.play();
 
     mensaje.textContent =
-      "Cámara activada. Apunta al código QR.";
+      "Cámara activada. Apunta hacia el código QR.";
 
   } catch (error) {
 
