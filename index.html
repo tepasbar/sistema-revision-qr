@@ -418,34 +418,24 @@ async function detectarQR() {
 
    if (codigos.length > 0) {
 
-const codigoDetectado = codigos[0].rawValue;
+    const codigoDetectado = codigos[0].rawValue;
 
-mensaje.textContent =
+    mensaje.textContent =
+        "Código detectado: " + codigoDetectado;
 
-"Código detectado:
+    if (modoEscaneo === "actividad") {
 
-codigoDetectado;
+        buscarActividadQR(codigoDetectado);
 
-+
+    } else if (modoEscaneo === "alumno") {
 
-if (modoEscaneo === "actividad")
+        registrarAlumnoQR(codigoDetectado);
 
-{
+    }
 
-buscarActividadQR(codigoDetectado) ;
-
-} else if (modoEscaneo ===
-
-"alumno") {
-
-registrarAlumnoQR(codigoDetectado) ;
+    return;
 
 }
-
-return;
-
-}
-
   } catch (error) {
 
     console.error("Error leyendo QR:", error);
