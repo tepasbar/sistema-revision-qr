@@ -153,15 +153,35 @@
 
     function cargarActividades() {
 
-      document.getElementById("resultado").innerHTML =
-        '<div class="cargando">Cargando actividades...</div>';
+  const resultado = document.getElementById("resultado");
 
-      google.script.run
-        .withSuccessHandler(mostrarActividades)
-        .withFailureHandler(mostrarError)
-        .obtenerActividades();
+  resultado.innerHTML =
+    '<div class="cargando">Cargando actividades...</div>';
 
-    }
+  const API_URL = "https://script.google.com/macros/s/AKfycbysrXA_7XanrNqWJrNbNCxPYPpkVg_s7kNcQqh-BXaKdFDQxe5VB7vMharGENFR67iR7A/exec";
+
+  fetch(API_URL)
+    .then(response => {
+
+      if (!response.ok) {
+        throw new Error("Error al conectar con el servidor");
+      }
+
+      return response.json();
+
+    })
+    .then(actividades => {
+
+      mostrarActividades(actividades);
+
+    })
+    .catch(error => {
+
+      mostrarError(error);
+
+    });
+
+}
 
 
     function mostrarActividades(actividades) {
