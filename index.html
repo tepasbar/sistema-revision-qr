@@ -589,6 +589,92 @@ fetch(API_URL, {
 
     
 }
+    function consultarAvanceAlumno(codigoAlumno) {
+
+  detenerEscaner();
+
+  document.getElementById("resultado").innerHTML = `
+    <div class="cargando">
+      Consultando avance del alumno...
+    </div>
+  `;
+
+  const API_URL = "https://script.google.com/macros/s/AKfycbysrXA_7XanrNqWJrNbNCxPYPpkVg_s7kNcQqh-BXaKdFDQxe5VB7vMharGENFR67iR7A/exec";
+
+  fetch(API_URL, {
+    method: "POST",
+    body: JSON.stringify({
+      accion: "avance",
+      alumno: codigoAlumno
+    })
+  })
+  .then(response => response.json())
+  .then(datos => {
+
+    if (!datos.alumno) {
+      document.getElementById("resultado").innerHTML = `
+        <div class="error">
+          ${datos.mensaje || "No se encontró el alumno."}
+        </div>
+      `;
+      return;
+    }
+
+    let lista = "";
+
+    datos.actividades.forEach(actividad => {
+
+      const estado = actividad.estado === "REVISADA"
+        ? "✅ REVISADA"
+        : "⏳ PENDIENTE";
+
+      lista += `
+        <p>
+          <strong>${actividad.materia}</strong> -
+          ${actividad.actividad}
+          <br>
+          ${estado}
+        </p>
+      `;
+    });
+
+    document.getElementById("resultado").innerHTML = `
+      <div class="exito">
+        <h2>${datos.alumno.nombre}</h2>
+
+        <p><strong>Grupo:</strong> ${datos.alumno.grupo}</p>
+
+        <h3>Avance: ${datos.porcentaje}%</h3>
+
+        <p>
+          ✅ Revisadas: ${datos.revisadas}
+          <br>
+          ⏳ Pendientes: ${datos.pendientes}
+          <br>
+          📚 Total: ${datos.total}
+        </p>
+
+        <hr>
+
+        ${lista}
+
+        <button onclick="cargarActividades()" class="boton-regresar">
+          ← Regresar a actividades
+        </button>
+      </div>
+    `;
+  })
+  .catch(error => {
+
+    document.getElementById("resultado").innerHTML = `
+      <div class="error">
+        Error al consultar el avance.
+      </div>
+    `;
+
+    console.error(error);
+  });
+}
     
   </script>
 
