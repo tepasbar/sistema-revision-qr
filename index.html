@@ -116,7 +116,7 @@
         Actualizar actividades
       </button>
 
-      <button class="boton-qr" onclick="iniciarEscaner()">
+   <button id="botonProfesor" class="boton-qr" onclick="iniciarEscaner()">
     📷 Escanear código QR
 </button>
       
@@ -668,6 +668,8 @@ fetch(API_URL, {
 
 }
  window.addEventListener("load", revisarAlumnoDesdeURL);   
+
+    revisarAlumnoDesdeURL();
   </script>
 
 </body>
