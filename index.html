@@ -656,7 +656,18 @@ fetch(API_URL, {
     console.error(error);
   });
 }
-    
+
+    function revisarAlumnoDesdeURL() {
+
+  const parametros = new URLSearchParams(window.location.search);
+  const alumno = parametros.get("alumno");
+
+  if (alumno) {
+    consultarAvanceAlumno(alumno);
+  }
+
+}
+ window.addEventListener("load", revisarAlumnoDesdeURL);   
   </script>
 
 </body>
