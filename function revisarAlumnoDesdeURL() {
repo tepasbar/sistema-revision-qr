@@ -120,7 +120,7 @@
     📷 Escanear código QR
 </button>
       
-      <button class="boton-qr" onclick="escanearAlumno()">
+    <button id="botonAlumno" class="boton-qr" onclick="escanearAlumno()">
   👤 Consultar avance del alumno
 </button>
 
@@ -662,9 +662,13 @@ fetch(API_URL, {
   const parametros = new URLSearchParams(window.location.search);
   const alumno = parametros.get("alumno");
 
-  if (alumno) {
+ if (alumno) {
+
+    document.getElementById("botonProfesor").style.display = "none";
+    document.getElementById("botonAlumno").style.display = "none";
+
     consultarAvanceAlumno(alumno);
-  }
+}
 
 }
  window.addEventListener("load", revisarAlumnoDesdeURL);   
