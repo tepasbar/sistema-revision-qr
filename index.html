@@ -343,7 +343,7 @@ var modoEscaneo = "actividad";
 
     function escanearAlumno() {
 
-  modoEscaneo = "alumno";
+modoEscaneo = "registro";
 
   iniciarEscaner();
 
@@ -432,15 +432,19 @@ try {
     mensaje.textContent =
         "Código detectado: " + codigoDetectado;
 
-    if (modoEscaneo === "actividad") {
+   if (modoEscaneo === "actividad") {
 
-        buscarActividadQR(codigoDetectado);
+    buscarActividadQR(codigoDetectado);
 
-   } else if (modoEscaneo === "consulta") {
+} else if (modoEscaneo === "registro") {
 
- consultarAvanceAlumno(codigoDetectado);
+    registrarAlumnoQR(codigoDetectado);
 
-    }
+} else if (modoEscaneo === "consulta") {
+
+    consultarAvanceAlumno(codigoDetectado);
+
+}
 
     return;
 
