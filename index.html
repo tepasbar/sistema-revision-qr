@@ -414,7 +414,20 @@ async function detectarQR() {
 
    if (codigos.length > 0) {
 
-    const codigoDetectado = codigos[0].rawValue;
+   const valorQR = codigos[0].rawValue;
+
+let codigoDetectado = valorQR;
+
+try {
+  const url = new URL(valorQR);
+  const alumnoURL = url.searchParams.get("alumno");
+
+  if (alumnoURL) {
+    codigoDetectado = alumnoURL;
+  }
+} catch (e) {
+  // El QR contiene un código normal
+}
 
     mensaje.textContent =
         "Código detectado: " + codigoDetectado;
