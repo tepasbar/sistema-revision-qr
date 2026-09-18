@@ -683,6 +683,23 @@ fetch(API_URL, {
  window.addEventListener("load", revisarAlumnoDesdeURL);   
 
     revisarAlumnoDesdeURL();
+
+function seleccionarTurno() {
+    document.getElementById("resultado").innerHTML = `
+        <div class="cargando">
+            <h2>Selecciona el turno</h2>
+
+            <button class="boton" onclick="seleccionarGrupo('M')">
+                ☀️ MATUTINO
+            </button>
+
+            <button class="boton" onclick="seleccionarGrupo('V')">
+                🌙 VESPERTINO
+            </button>
+        </div>
+    `;
+}
+    
   </script>
 
 </body>
