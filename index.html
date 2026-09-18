@@ -703,6 +703,64 @@ fetch(API_URL, {
         </div>
     `;
 }
+
+    function seleccionarActividadGrupo(grupo) {
+    const resultadoDiv = document.getElementById("resultado");
+
+    resultadoDiv.innerHTML = `
+        <div class="cargando">
+            <h2>Selecciona la actividad</h2>
+            <p>Grupo: ${grupo}</p>
+            <p>Buscando actividades...</p>
+        </div>
+    `;
+
+    const API_URL = "https://script.google.com/macros/s/AKfycbysrXA_7XanrNqWJrNbNCxPYPpkVg_s7kNcQqh-BXaKdFDQxe5VB7vMharGENFR67iR7A/exec";
+
+    fetch(API_URL)
+        .then(response => response.json())
+        .then(actividades => {
+
+            const actividadesGrupo = actividades.filter(a =>
+                String(a.grupo).trim() === String(grupo).trim() ||
+                String(a.grupo).trim() === ""
+            );
+
+            if (actividadesGrupo.length === 0) {
+                resultadoDiv.innerHTML = `
+                    <div class="error">
+                        No hay actividades registradas para el grupo ${grupo}.
+                    </div>
+                `;
+                return;
+            }
+
+            let html = `
+                <div class="cargando">
+                    <h2>Selecciona la actividad</h2>
+                    <p>Grupo: ${grupo}</p>
+            `;
+
+            actividadesGrupo.forEach(actividad => {
+                html += `
+                    <button class="boton" onclick="seleccionarActividad('${actividad.id}')">
+                        ${actividad.materia} - ${actividad.actividad}
+                    </button>
+                `;
+            });
+
+            html += `</div>`;
+
+            resultadoDiv.innerHTML = html;
+        })
+        .catch(error => {
+            resultadoDiv.innerHTML = `
+                <div class="error">
+                    Error al cargar las actividades: ${error.message}
+                </div>
+            `;
+        });
+}
     
 function seleccionarTurno() {
     document.getElementById("resultado").innerHTML = `
