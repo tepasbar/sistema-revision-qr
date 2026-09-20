@@ -112,9 +112,9 @@
 
     <div class="contenido">
 
-      <button class="boton" onclick="cargarActividades()">
-        Actualizar actividades
-      </button>
+     <button id="botonActividades" class="boton" onclick="cargarActividades()">
+    Actualizar actividades
+</button>
 
  <button id="botonProfesor" class="boton-qr" onclick="seleccionarTurno()">
     📷 Escanear código QR
@@ -675,6 +675,7 @@ fetch(API_URL, {
 
     document.getElementById("botonProfesor").style.display = "none";
     document.getElementById("botonAlumno").style.display = "none";
+   document.getElementById("botonActividades").style.display = "none";
 
     consultarAvanceAlumno(alumno);
 }
