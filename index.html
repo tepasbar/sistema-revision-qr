@@ -648,7 +648,7 @@ fetch(API_URL, {
 
         ${lista}
 
-      <button id="botonRegresarActividades" onclick="cargarActividades()" class="boton-regresar">
+     <button id="botonRegresarActividades" onclick="cargarActividades()" class="boton-regresar" style="display:none;">
           ← Regresar a actividades
         </button>
       </div>
@@ -675,6 +675,7 @@ fetch(API_URL, {
 
     document.getElementById("botonProfesor").style.display = "none";
     document.getElementById("botonAlumno").style.display = "none";
+  document.getElementById("botonActividades").style.display = "none";
  
     consultarAvanceAlumno(alumno);
 }
