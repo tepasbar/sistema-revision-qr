@@ -297,9 +297,9 @@ function seleccionarActividad(id) {
 
 resultadoDiv.innerHTML = `
 
-  <button class="boton-regresar" onclick="cargarActividades()">
+  <button id="botonRegresarActividades" class="boton-regresar" onclick="cargarActividades()">
     ← Regresar a actividades
-  </button>
+</button>
 
   <div class="actividad">
 
@@ -675,7 +675,7 @@ fetch(API_URL, {
 
     document.getElementById("botonProfesor").style.display = "none";
     document.getElementById("botonAlumno").style.display = "none";
-   document.getElementById("botonActividades").style.display = "none";
+  document.getElementById("botonRegresarActividades").style.display = "none";
 
     consultarAvanceAlumno(alumno);
 }
