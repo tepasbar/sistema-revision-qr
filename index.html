@@ -171,6 +171,7 @@
   <script>
 
     let turnoSeleccionado = "";
+    let grupoSeleccionado = "";
 
    function cargarActividades() {
 
@@ -569,7 +570,7 @@ fetch(API_URL, {
     📷 Escanear siguiente alumno
 </button>
 
-<button onclick="seleccionarActividadGrupo(actividadSeleccionada.grupo)" class="boton-regresar" style="display:block; margin-top:15px;">
+<button onclick="seleccionarActividadGrupo(grupoSeleccionado)" class="boton-regresar" style="display:block; margin-top:15px;">
   ← Regresar a actividades
 </button>
 
@@ -729,6 +730,7 @@ fetch(API_URL, {
 }
 
     function seleccionarActividadGrupo(grupo) {
+      grupoSeleccionado = grupo;
     const resultadoDiv = document.getElementById("resultado");
 
     resultadoDiv.innerHTML = `
