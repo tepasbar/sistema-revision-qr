@@ -578,14 +578,18 @@ fetch(API_URL, {
         `;
 
     } else {
+    document.getElementById("resultado").innerHTML = `
+        <div class="error">
+            ${datos.mensaje}
 
-        document.getElementById("resultado").innerHTML = `
-            <div class="error">
-                ${datos.mensaje}
-            </div>
-        `;
-
-    }
+            <button onclick="seleccionarActividadGrupo(grupoSeleccionado)" 
+                    class="boton-regresar" 
+                    style="display:block; margin:15px auto 0;">
+                ← Regresar a actividades
+            </button>
+        </div>
+    `;
+}
 
 })
 .catch(error => {
