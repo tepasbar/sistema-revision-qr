@@ -172,6 +172,7 @@
 
     let turnoSeleccionado = "";
     let grupoSeleccionado = "";
+    let actividadesGuardadas = [];
 
    function cargarActividades() {
 
@@ -582,7 +583,7 @@ fetch(API_URL, {
         <div class="error">
             ${datos.mensaje}
 
-            <button onclick="seleccionarActividadGrupo(grupoSeleccionado)" 
+            <button onclick="regresarAActividades()" 
                     class="boton-regresar" 
                     style="display:block; margin:15px auto 0;">
                 ← Regresar a actividades
@@ -733,6 +734,39 @@ fetch(API_URL, {
     `;
 }
 
+    function regresarAActividades() {
+  const grupo = grupoSeleccionado;
+  const resultadoDiv = document.getElementById("resultado");
+
+  if (actividadesGuardadas.length > 0) {
+
+    const actividadesGrupo = actividadesGuardadas.filter(a =>
+      String(a.grupo).trim() === String(grupo).trim() ||
+      String(a.grupo).trim() === ""
+    );
+
+    let html = `
+      <div class="cargando">
+        <h2>Selecciona la actividad</h2>
+        <p>Grupo: ${grupo}</p>
+    `;
+
+    actividadesGrupo.forEach(actividad => {
+      html += `
+        <button class="boton" onclick="seleccionarActividad('${actividad.id}')">
+          ${actividad.materia} - ${actividad.actividad}
+        </button>
+      `;
+    });
+
+    html += `</div>`;
+    resultadoDiv.innerHTML = html;
+
+  } else {
+    seleccionarActividadGrupo(grupo);
+  }
+}
+
     function seleccionarActividadGrupo(grupo) {
       grupoSeleccionado = grupo;
     const resultadoDiv = document.getElementById("resultado");
@@ -750,6 +784,7 @@ fetch(API_URL, {
     fetch(API_URL)
         .then(response => response.json())
         .then(actividades => {
+          actividadesGuardadas = actividades;
 
             const actividadesGrupo = actividades.filter(a =>
                 String(a.grupo).trim() === String(grupo).trim() ||
