@@ -578,6 +578,10 @@ fetch(API_URL, {
             </div>
         `;
 
+      setTimeout(() => {
+  iniciarEscaner();
+}, 800);
+
     } else {
     document.getElementById("resultado").innerHTML = `
         <div class="error">
