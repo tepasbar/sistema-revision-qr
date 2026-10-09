@@ -826,13 +826,14 @@ fetch(API_URL, {
   });
 }
     
-    function consultarAvanceAlumno(codigoAlumno) {
+    
+function consultarAvanceAlumno(codigoAlumno) {
 
   detenerEscaner();
 
   document.getElementById("resultado").innerHTML = `
     <div class="cargando">
-      Consultando avance del alumno...
+      Consultando avance y asistencia del alumno...
     </div>
   `;
 
@@ -856,6 +857,126 @@ fetch(API_URL, {
       `;
       return;
     }
+
+    actividadesGuardadas = datos.actividades || [];
+
+    const asistencia = datos.asistencia || {};
+
+    let lista = "";
+
+    datos.actividades.forEach(actividad => {
+
+      const estado = actividad.estado === "REVISADA"
+        ? "✅ REVISADA"
+        : "⏳ PENDIENTE";
+
+      lista += `
+        <div class="actividad">
+          <p>
+            <strong>${actividad.materia}</strong> -
+            ${actividad.actividad}
+          </p>
+          <p>${estado}</p>
+        </div>
+      `;
+    });
+
+    const asistenciaHtml = `
+      <section style="
+        margin:25px 0;
+        padding:20px;
+        background:#f8f9fa;
+        border-radius:12px;
+        border:1px solid #e0e0e0;
+      ">
+        <h2 style="margin-top:0;">📅 Mi asistencia</h2>
+
+        <div style="
+          display:grid;
+          grid-template-columns:repeat(auto-fit,minmax(120px,1fr));
+          gap:12px;
+        ">
+          <div style="background:#e6f4ea;padding:15px;border-radius:10px;text-align:center;">
+            <div style="font-size:28px;font-weight:bold;color:#188038;">
+              ${asistencia.asistencias ?? 0}
+            </div>
+            <div>Asistencias</div>
+          </div>
+
+          <div style="background:#fce8e6;padding:15px;border-radius:10px;text-align:center;">
+            <div style="font-size:28px;font-weight:bold;color:#b3261e;">
+              ${asistencia.faltas ?? 0}
+            </div>
+            <div>Inasistencias</div>
+          </div>
+
+          <div style="background:#e8f0fe;padding:15px;border-radius:10px;text-align:center;">
+            <div style="font-size:28px;font-weight:bold;color:#1967d2;">
+              ${asistencia.justificadas ?? 0}
+            </div>
+            <div>Justificadas</div>
+          </div>
+        </div>
+
+        <div style="margin-top:20px;">
+          <p>
+            <strong>Porcentaje de asistencia:</strong>
+            ${asistencia.porcentaje ?? 0}%
+          </p>
+
+          <div style="height:12px;background:#e0e0e0;border-radius:10px;overflow:hidden;">
+            <div style="
+              height:100%;
+              width:${Math.min(100, Math.max(0, Number(asistencia.porcentaje) || 0))}%;
+              background:#188038;
+              border-radius:10px;
+            "></div>
+          </div>
+
+          <p style="color:#666;font-size:13px;">
+            Días registrados: ${asistencia.totalDias ?? 0}
+          </p>
+        </div>
+      </section>
+    `;
+
+    document.getElementById("resultado").innerHTML = `
+      <div class="exito">
+
+        <h2>${datos.alumno.nombre}</h2>
+        <p><strong>Grupo:</strong> ${datos.alumno.grupo}</p>
+
+        <h2>📚 Mi avance académico</h2>
+        <h3>Actividades revisadas: ${datos.porcentaje}%</h3>
+
+        <p>
+          ✅ Revisadas: ${datos.revisadas}
+          <br>
+          ⏳ Pendientes: ${datos.pendientes}
+          <br>
+          📚 Total: ${datos.total}
+        </p>
+
+        ${asistenciaHtml}
+
+        <h2>Detalle de actividades</h2>
+        ${lista}
+
+      </div>
+    `;
+  })
+  .catch(error => {
+
+    console.error("Error al consultar el avance:", error);
+
+    document.getElementById("resultado").innerHTML = `
+      <div class="error">
+        Error al consultar el avance y la asistencia.
+        Intenta nuevamente.
+      </div>
+    `;
+  });
+}
 
     actividadesGuardadas = datos.actividades;
     
