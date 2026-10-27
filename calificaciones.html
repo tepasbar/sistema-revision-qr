@@ -201,6 +201,23 @@ async function cargarMaterias() {
 
 document.getElementById("turno").addEventListener("change", cargarGrupos);
 document.addEventListener("DOMContentLoaded", cargarGrupos);
+
+ const selectorTrimestre = document.getElementById("trimestre");
+
+selectorTrimestre.value =
+  localStorage.getItem("trimestreSeleccionadoQR") || "1";
+
+localStorage.setItem(
+  "trimestreSeleccionadoQR",
+  selectorTrimestre.value
+);
+
+selectorTrimestre.addEventListener("change", () => {
+  localStorage.setItem(
+    "trimestreSeleccionadoQR",
+    selectorTrimestre.value
+  );
+});
  
  async function consultar() {
   const grupo = valor("grupo");
