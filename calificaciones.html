@@ -1,0 +1,348 @@
+
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Registro de calificaciones</title>
+<style>
+  * { box-sizing: border-box; }
+  body {
+    margin: 0; padding: 20px;
+    font-family: Arial, sans-serif;
+    background: #f2f5fa; color: #25324a;
+  }
+  .contenedor {
+    max-width: 1200px; margin: auto;
+    background: white; padding: 24px;
+    border-radius: 14px;
+    box-shadow: 0 3px 14px #00000012;
+  }
+  h1 { color: #174a8b; margin-top: 0; }
+  .filtros {
+    display: grid;
+    grid-template-columns: repeat(auto-fit,minmax(170px,1fr));
+    gap: 14px; margin: 20px 0;
+  }
+  label { display: block; font-weight: bold; margin-bottom: 6px; }
+  input, select, button {
+    width: 100%; padding: 11px;
+    border: 1px solid #ccd4df; border-radius: 7px;
+    font-size: 15px;
+  }
+  button {
+    border: none; background: #1768b2; color: white;
+    cursor: pointer; font-weight: bold;
+  }
+  button:hover { background: #104c85; }
+  button:disabled { opacity: .55; cursor: wait; }
+  .guardar { padding: 8px; font-size: 13px; }
+  .estado { margin: 14px 0; font-weight: bold; }
+  .tabla { overflow-x: auto; }
+  table { border-collapse: collapse; width: 100%; margin-top: 16px; }
+  th, td {
+    padding: 10px; border: 1px solid #dce2eb;
+    text-align: left; white-space: nowrap;
+  }
+  th { background: #eaf1fa; }
+  td input { min-width: 85px; width: 90px; }
+  .promedio { font-weight: bold; color: #1768b2; }
+  .resumen { background: #f4f8fd; padding: 12px; border-radius: 8px; }
+  .nota { color: #596579; font-size: 13px; }
+</style>
+</head>
+<body>
+<div class="contenedor">
+  <h1>Registro de calificaciones</h1>
+  <p>Selecciona el grupo y la materia para consultar y registrar las calificaciones de tus alumnos.</p>
+
+  <div class="filtros">
+    <div>
+      <label for="turno">Turno</label>
+      <select id="turno">
+        <option value="MATUTINO">MATUTINO</option>
+        <option value="VESPERTINO">VESPERTINO</option>
+      </select>
+    </div>
+    <div>
+      <label for="grupo">Grupo</label>
+      <input id="grupo" placeholder="Ej. 1°A" required>
+    </div>
+    <div>
+      <label for="materia">Materia</label>
+      <input id="materia" placeholder="Escribe el nombre exacto" required>
+    </div>
+    <div>
+      <label for="trimestre">Trimestre</label>
+      <select id="trimestre">
+        <option value="1">Primer trimestre</option>
+        <option value="2">Segundo trimestre</option>
+        <option value="3">Tercer trimestre</option>
+      </select>
+    </div>
+    <div style="align-self:end">
+      <button id="consultar" onclick="consultar()">Consultar alumnos</button>
+    </div>
+  </div>
+
+  <div id="estado" class="estado" role="status">Selecciona los datos y consulta.</div>
+  <div id="resumen" class="resumen" hidden></div>
+  <div id="tabla" class="tabla"></div>
+  <p class="nota">El promedio considera únicamente las actividades que tienen calificación. Las actividades sin calificar no cuentan como cero.</p>
+</div>
+
+<script>
+const API_URL = "https://script.google.com/macros/s/AKfycbwD2VFs1QXroZ2vaquLJyP2thLeAkGOKP4lIoKY9xWeFlclRN4EL3p6RRbHztNAAKIxcQ/exec";
+
+let datosActuales = null;
+
+function valor(id) {
+  return document.getElementById(id).value.trim();
+}
+
+function escapar(texto) {
+  return String(texto ?? "").replace(/[&<>"']/g, c => ({
+    "&":"&amp;", "<":"&lt;", ">":"&gt;",
+    '"':"&quot;", "'":"&#39;"
+  })[c]);
+}
+
+function estado(mensaje) {
+  document.getElementById("estado").textContent = mensaje;
+}
+
+async function enviar(datos) {
+  const respuesta = await fetch(API_URL, {
+    method: "POST",
+    body: JSON.stringify(datos)
+  });
+  if (!respuesta.ok) throw new Error("Error de conexión con el servidor.");
+  return await respuesta.json();
+}
+
+async function consultar() {
+  const grupo = valor("grupo");
+  const materia = valor("materia");
+
+  if (!grupo || !materia) {
+    estado("Escribe el grupo y el nombre exacto de la materia.");
+    return;
+  }
+
+  document.getElementById("consultar").disabled = true;
+  document.getElementById("tabla").innerHTML = "";
+  document.getElementById("resumen").hidden = true;
+  estado("Consultando información...");
+
+  try {
+    const resultado = await enviar({
+      accion: "obtenerDatosCalificaciones",
+      turno: valor("turno"),
+      grupo,
+      materia,
+      trimestre: valor("trimestre")
+    });
+
+    if (!resultado.success) {
+      throw new Error(resultado.mensaje || "No se pudieron consultar los datos.");
+    }
+
+    datosActuales = resultado;
+    mostrarTabla(resultado);
+  } catch (error) {
+    estado("No fue posible consultar: " + error.message +
+      ". Si aparece un error de conexión, revisaremos el acceso de Apps Script.");
+  } finally {
+    document.getElementById("consultar").disabled = false;
+  }
+}
+
+function mostrarTabla(datos) {
+  const alumnos = datos.alumnos || [];
+  const actividades = datos.actividades || [];
+  const filas = datos.filas || [];
+  const tabla = document.getElementById("tabla");
+
+  if (!alumnos.length) {
+    estado("No se encontraron alumnos para ese turno y grupo. Revisa cómo está escrito el grupo.");
+    tabla.innerHTML = "";
+    return;
+  }
+
+  if (!actividades.length) {
+    estado("No se encontraron actividades para esa materia y grupo. Verifica el nombre exacto en la hoja ACTIVIDADES.");
+    tabla.innerHTML = "";
+    return;
+  }
+
+  const calificaciones = {};
+  filas.forEach(f => {
+    calificaciones[String(f.alumnoId) + "|" + String(f.actividadId)] = f.calificacion;
+  });
+
+  let html = "<table><thead><tr><th>Alumno</th>";
+  actividades.forEach(a => {
+    html += "<th>" + escapar(a.actividad || a.nombre || a.id) + "</th>";
+  });
+  html += "<th>Promedio</th></tr></thead><tbody>";
+
+  alumnos.forEach((alumno, indice) => {
+    const id = alumno.id ?? alumno.alumnoId ?? alumno.ID_ALUMNO;
+    const nombre = alumno.nombre ?? alumno.alumno ?? alumno.NOMBRE ?? id;
+    html += "<tr><td>" + escapar(nombre) + "</td>";
+
+    let suma = 0;
+    let cantidad = 0;
+
+    actividades.forEach((actividad, j) => {
+      const actividadId = actividad.id ?? actividad.actividadId ?? actividad.ID_ACTIVIDAD;
+      const clave = String(id) + "|" + String(actividadId);
+      const nota = Object.prototype.hasOwnProperty.call(calificaciones, clave)
+        ? calificaciones[clave] : "";
+      const numero = nota === "" || nota === null ? NaN : Number(nota);
+
+      if (Number.isFinite(numero)) {
+        suma += numero;
+        cantidad++;
+      }
+
+      const inputId = "nota_" + indice + "_" + j;
+      html += '<td><input type="number" id="' + inputId +
+        '" min="0" max="10" step="0.1" placeholder="—" value="' +
+        escapar(nota === null ? "" : nota) + '" aria-label="Calificación de ' +
+        escapar(nombre) + '"></td>';
+    });
+
+    const promedio = cantidad ? (suma / cantidad).toFixed(2) : "—";
+    html += '<td class="promedio" id="prom_' + indice + '">' + promedio + '</td>';
+
+    // Se guarda la información del alumno y sus actividades para los botones.
+    html += "</tr>";
+  });
+
+  html += "</tbody></table>";
+  tabla.innerHTML = html;
+
+  // Añade una fila independiente para guardar cada alumno y actividad.
+  const botones = [];
+  alumnos.forEach((alumno, i) => {
+    actividades.forEach((actividad, j) => {
+      const id = alumno.id ?? alumno.alumnoId ?? alumno.ID_ALUMNO;
+      const actividadId = actividad.id ?? actividad.actividadId ?? actividad.ID_ACTIVIDAD;
+      botones.push({ alumno, actividad, i, j, id, actividadId });
+    });
+  });
+
+  // Agrega botón Guardar debajo de cada calificación.
+  const encabezado = tabla.querySelector("thead tr");
+  encabezado.insertAdjacentHTML("beforeend", "<th>Guardar</th>");
+  tabla.querySelectorAll("tbody tr").forEach((fila, i) => {
+    fila.insertAdjacentHTML("beforeend", '<td><button class="guardar" id="guardar_fila_' +
+      i + '" onclick="guardarAlumno(' + i + ')">Guardar</button></td>');
+  });
+
+  datos._calificaciones = calificaciones;
+  datos._alumnosVista = alumnos;
+  datos._actividadesVista = actividades;
+  datosActuales = datos;
+
+  // Actualiza el promedio cuando se modifican las notas.
+  alumnos.forEach((alumno, i) => {
+    actividades.forEach((actividad, j) => {
+      document.getElementById("nota_" + i + "_" + j)
+        .addEventListener("input", () => actualizarPromedio(i));
+    });
+  });
+
+  estado(alumnos.length + " alumnos y " + actividades.length + " actividades.");
+  actualizarResumen();
+}
+
+function actualizarPromedio(i) {
+  if (!datosActuales) return;
+  let suma = 0, cantidad = 0;
+  datosActuales._actividadesVista.forEach((a, j) => {
+    const campo = document.getElementById("nota_" + i + "_" + j);
+    if (campo && campo.value.trim() !== "" && campo.checkValidity()) {
+      suma += Number(campo.value);
+      cantidad++;
+    }
+  });
+  document.getElementById("prom_" + i).textContent =
+    cantidad ? (suma / cantidad).toFixed(2) : "—";
+  actualizarResumen();
+}
+
+function actualizarResumen() {
+  if (!datosActuales) return;
+  const promedios = datosActuales._alumnosVista.map((a, i) =>
+    document.getElementById("prom_" + i).textContent
+  ).filter(x => x !== "—").map(Number);
+
+  const resumen = document.getElementById("resumen");
+  resumen.hidden = false;
+  resumen.textContent = "Alumnos: " + datosActuales._alumnosVista.length +
+    " | Actividades: " + datosActuales._actividadesVista.length +
+    " | Promedio del grupo (alumnos con calificaciones): " +
+    (promedios.length
+      ? (promedios.reduce((a,b) => a+b, 0) / promedios.length).toFixed(2)
+      : "Sin calificaciones");
+}
+
+async function guardarAlumno(i) {
+  if (!datosActuales) return;
+  const alumno = datosActuales._alumnosVista[i];
+  const actividades = datosActuales._actividadesVista;
+  const alumnoId = alumno.id ?? alumno.alumnoId ?? alumno.ID_ALUMNO;
+  const boton = document.getElementById("guardar_fila_" + i);
+
+  // Guarda las calificaciones no vacías de este alumno, una por actividad.
+  const pendientes = [];
+  for (let j = 0; j < actividades.length; j++) {
+    const campo = document.getElementById("nota_" + i + "_" + j);
+    if (!campo || campo.value.trim() === "") continue;
+
+    if (!campo.checkValidity() || Number(campo.value) < 0 || Number(campo.value) > 10) {
+      campo.focus();
+      estado("Las calificaciones deben estar entre 0 y 10.");
+      return;
+    }
+
+    pendientes.push({
+      accion: "guardarCalificacion",
+      alumnoId,
+      actividadId: actividades[j].id ?? actividades[j].actividadId ?? actividades[j].ID_ACTIVIDAD,
+      turno: valor("turno"),
+      grupo: valor("grupo"),
+      materia: valor("materia"),
+      trimestre: valor("trimestre"),
+      calificacion: Number(campo.value)
+    });
+  }
+
+  if (!pendientes.length) {
+    estado("No hay calificaciones escritas para guardar para este alumno.");
+    return;
+  }
+
+  boton.disabled = true;
+  boton.textContent = "Guardando...";
+  try {
+    for (const datos of pendientes) {
+      const resultado = await enviar(datos);
+      if (!resultado.success) {
+        throw new Error(resultado.mensaje || "No se pudo guardar una calificación.");
+      }
+    }
+    estado("Calificaciones guardadas para " +
+      (alumno.nombre ?? alumno.alumno ?? alumno.NOMBRE ?? alumnoId) + ".");
+  } catch (error) {
+    estado("Error al guardar: " + error.message);
+  } finally {
+    boton.disabled = false;
+    boton.textContent = "Guardar";
+  }
+}
+</script>
+</body>
+</html>
