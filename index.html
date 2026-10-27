@@ -618,8 +618,8 @@ fetch(API_URL, {
 
     }
 
-    function mostrarActividadesParaAlumno(codigoAlumno) {
-
+   
+function mostrarActividadesParaAlumno(codigoAlumno) {
   const resultado = document.getElementById("resultado");
 
   resultado.innerHTML = `
@@ -640,7 +640,6 @@ fetch(API_URL, {
   })
   .then(response => response.json())
   .then(datos => {
-
     if (!datos.alumno) {
       resultado.innerHTML = `
         <div class="error">
@@ -650,48 +649,50 @@ fetch(API_URL, {
       return;
     }
 
-    actividadesGuardadas = datos.actividades;
+    actividadesGuardadas = datos.actividades || [];
 
     let html = `
       <div class="exito">
-
         <h2>${datos.alumno.nombre}</h2>
-
-        <p>
-          <strong>Grupo:</strong>
-          ${datos.alumno.grupo}
-        </p>
-
-        <h3>Selecciona las actividades revisadas</h3>
+        <p><strong>Grupo:</strong> ${datos.alumno.grupo}</p>
+        <h3>Selecciona las actividades y escribe sus calificaciones</h3>
+        <p>Las calificaciones deben estar entre 0 y 10.</p>
     `;
 
-    datos.actividades.forEach(actividad => {
-
+    datos.actividades.forEach((actividad, indice) => {
       const revisada = actividad.estado === "REVISADA";
 
       html += `
-        <label style="
-          display:block;
-          padding:12px;
-          margin:8px 0;
-          background:#f5f5f5;
-          border-radius:8px;
-        ">
+        <div class="actividad">
+          <label style="display:block;padding:8px;">
+            <input
+              type="checkbox"
+              class="actividad-multiple"
+              value="${actividad.id}"
+              ${revisada ? "checked disabled" : ""}
+              style="width:auto;margin-right:8px;"
+            >
+            <strong>${actividad.materia}</strong> - ${actividad.actividad}
+            ${revisada ? " ✅ REVISADA" : ""}
+          </label>
 
-          <input
-            type="checkbox"
-            class="actividad-multiple"
-            value="${actividad.id}"
-            ${revisada ? "checked disabled" : ""}
-            style="transform:scale(1.3); margin-right:10px;"
-          >
-
-          <strong>${actividad.materia}</strong>
-          - ${actividad.actividad}
-
-          ${revisada ? " ✅ REVISADA" : ""}
-
-        </label>
+          ${!revisada ? `
+            <label for="calificacion_${indice}">
+              Calificación (0 a 10)
+            </label>
+            <input
+              type="number"
+              id="calificacion_${indice}"
+              class="calificacion-actividad"
+              data-actividad-id="${actividad.id}"
+              min="0"
+              max="10"
+              step="0.1"
+              placeholder="Escribe la calificación"
+              style="width:100%;padding:10px;margin-bottom:8px;"
+            >
+          ` : ""}
+        </div>
       `;
     });
 
@@ -700,40 +701,36 @@ fetch(API_URL, {
           onclick="registrarActividadesSeleccionadas()"
           class="boton"
           style="margin-top:15px;">
-          ✅ Registrar actividades seleccionadas
+          ✅ Registrar actividades y calificaciones
         </button>
 
         <button
           onclick="seleccionarActividadGrupo(grupoSeleccionado)"
           class="boton-regresar"
-          style="display:block; margin:10px auto;">
+          style="display:block;margin:10px auto;">
           ← Regresar a actividades
         </button>
-
       </div>
     `;
 
     resultado.innerHTML = html;
-
   })
   .catch(error => {
-
     console.error(error);
-
     resultado.innerHTML = `
       <div class="error">
         Error al consultar las actividades.
       </div>
     `;
-
   });
 }
 
-    function registrarActividadesSeleccionadas() {
 
-      const trimestreSeleccionado =
-  localStorage.getItem("trimestreSeleccionadoQR") || "1";
-      
+   
+async function registrarActividadesSeleccionadas() {
+  const trimestreSeleccionado =
+    localStorage.getItem("trimestreSeleccionadoQR") || "1";
+
   const seleccionadas = Array.from(
     document.querySelectorAll(".actividad-multiple:checked:not(:disabled)")
   ).map(cb => cb.value);
@@ -743,92 +740,152 @@ fetch(API_URL, {
     return;
   }
 
-  const resultado = document.getElementById("resultado");
+  const actividades = seleccionadas.map(id =>
+    actividadesGuardadas.find(a => String(a.id) === String(id))
+  );
 
+  if (actividades.some(a => !a)) {
+    alert("No se encontró alguna actividad seleccionada. Actualiza e intenta de nuevo.");
+    return;
+  }
+
+  // Validar todas las notas antes de registrar cualquier revisión.
+  const registros = [];
+
+  for (const actividad of actividades) {
+    const campo = document.querySelector(
+      `.calificacion-actividad[data-actividad-id="${CSS.escape(String(actividad.id))}"]`
+    );
+
+    if (!campo || campo.value.trim() === "") {
+      alert(`Escribe la calificación de la actividad: ${actividad.actividad}`);
+      if (campo) campo.focus();
+      return;
+    }
+
+    const nota = Number(campo.value);
+
+    if (!Number.isFinite(nota) || nota < 0 || nota > 10) {
+      alert(`La calificación de "${actividad.actividad}" debe estar entre 0 y 10.`);
+      campo.focus();
+      return;
+    }
+
+    registros.push({ actividad, calificacion: nota });
+  }
+
+  const resultado = document.getElementById("resultado");
   resultado.innerHTML = `
     <div class="cargando">
-      <h2>Registrando actividades...</h2>
-      <p>Espera un momento.</p>
+      <h2>Guardando revisiones y calificaciones...</h2>
+      <p>Espera un momento y no cierres esta página.</p>
     </div>
   `;
 
   const API_URL = "https://script.google.com/macros/s/AKfycbwD2VFs1QXroZ2vaquLJyP2thLeAkGOKP4lIoKY9xWeFlclRN4EL3p6RRbHztNAAKIxcQ/exec";
 
-  const actividades = seleccionadas.map(id =>
-    actividadesGuardadas.find(a =>
-      String(a.id) === String(id)
-    )
-  );
+  try {
+    // Obtener datos actuales del alumno desde Apps Script.
+    const respuestaAvance = await fetch(API_URL, {
+      method: "POST",
+      body: JSON.stringify({
+        accion: "avance",
+        alumno: alumnoSeleccionado
+      })
+    });
 
-  Promise.all(
-    actividades.map(actividad =>
-      fetch(API_URL, {
+    const datosAvance = await respuestaAvance.json();
+
+    if (!datosAvance.alumno) {
+      throw new Error(datosAvance.mensaje || "No se encontró el alumno.");
+    }
+
+    const alumno = datosAvance.alumno;
+    const grupo = String(alumno.grupo || "").trim();
+    const turno = String(alumno.turno || "").trim();
+
+    if (!alumno.id || !grupo || !turno) {
+      throw new Error("Faltan el ID, grupo o turno del alumno. No se guardó ningún registro.");
+    }
+
+    // Guardar primero las calificaciones.
+    for (const registro of registros) {
+      const respuestaNota = await fetch(API_URL, {
+        method: "POST",
+        body: JSON.stringify({
+          accion: "guardarCalificacion",
+          alumnoId: alumno.id,
+          grupo,
+          turno,
+          materia: registro.actividad.materia,
+          actividadId: registro.actividad.id,
+          trimestre: trimestreSeleccionado,
+          calificacion: registro.calificacion
+        })
+      });
+
+      const resultadoNota = await respuestaNota.json();
+
+      if (!resultadoNota.success) {
+        throw new Error(
+          resultadoNota.mensaje ||
+          `No se pudo guardar la calificación de ${registro.actividad.actividad}.`
+        );
+      }
+    }
+
+    // Registrar las revisiones mediante el mecanismo existente.
+    for (const registro of registros) {
+      const respuestaRevision = await fetch(API_URL, {
         method: "POST",
         body: JSON.stringify({
           alumno: alumnoSeleccionado,
-          actividad: actividad
+          actividad: registro.actividad
         })
-      }).then(response => response.json())
-    )
-  )
-  .then(resultados => {
+      });
 
-    const errores = resultados.filter(r => !r.success);
+      const resultadoRevision = await respuestaRevision.json();
 
-    if (errores.length > 0) {
-
-      resultado.innerHTML = `
-        <div class="error">
-          Algunas actividades no pudieron registrarse.
-          <br><br>
-          ${errores.map(e => e.mensaje).join("<br>")}
-        </div>
-      `;
-
-      return;
+      if (!resultadoRevision.success) {
+        throw new Error(
+          resultadoRevision.mensaje ||
+          `La calificación se guardó, pero no se pudo registrar la revisión de ${registro.actividad.actividad}.`
+        );
+      }
     }
 
     resultado.innerHTML = `
       <div class="exito">
+        <h2>✓ Revisiones y calificaciones guardadas</h2>
+        <p>Alumno: <strong>${alumno.nombre}</strong></p>
+        <p>Grupo: <strong>${grupo}</strong></p>
+        <p>Trimestre: <strong>${trimestreSeleccionado}</strong></p>
+        <p>Actividades guardadas: <strong>${registros.length}</strong></p>
 
-        <h2>✓ Actividades registradas correctamente</h2>
-
-        <p>
-          Se registraron
-          <strong>${seleccionadas.length}</strong>
-          actividades para el alumno.
-        </p>
-
-        <button
-          onclick="iniciarEscaner()"
-          class="boton-escanear">
+        <button onclick="iniciarEscaner()" class="boton-escanear">
           📷 Escanear siguiente alumno
         </button>
 
         <button
           onclick="seleccionarActividadGrupo(grupoSeleccionado)"
           class="boton-regresar"
-          style="display:block; margin-top:15px;">
+          style="display:block;margin-top:15px;">
           ← Regresar a actividades
         </button>
-
       </div>
     `;
-
-  })
-  .catch(error => {
-
+  } catch (error) {
     console.error(error);
-
     resultado.innerHTML = `
       <div class="error">
-        Error al registrar las actividades.
+        <h2>No se completó todo el registro</h2>
+        <p>${error.message}</p>
+        <p>Revisa las calificaciones antes de volver a intentar. Algunas notas podrían haberse guardado.</p>
       </div>
     `;
-
-  });
+  }
 }
-    
+
     
 function consultarAvanceAlumno(codigoAlumno) {
 
