@@ -731,6 +731,9 @@ fetch(API_URL, {
 
     function registrarActividadesSeleccionadas() {
 
+      const trimestreSeleccionado =
+  localStorage.getItem("trimestreSeleccionadoQR") || "1";
+      
   const seleccionadas = Array.from(
     document.querySelectorAll(".actividad-multiple:checked:not(:disabled)")
   ).map(cb => cb.value);
