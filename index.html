@@ -1,792 +1,1149 @@
-<!DOCTYPE html>
-<html lang="es">
-<head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-
-  <title>Sistema de Revisión QR</title>
-
-  <style>
-
-    * {
-      box-sizing: border-box;
-    }
-
-    body {
-      font-family: Arial, sans-serif;
-      background: #f4f6f8;
-      margin: 0;
-      padding: 0;
-    }
-
-    .contenedor {
-      max-width: 900px;
-      margin: 40px auto;
-      padding: 25px;
-    }
-
-    .encabezado {
-      background: #1a73e8;
-      color: white;
-      padding: 25px;
-      border-radius: 15px 15px 0 0;
-      text-align: center;
-    }
-
-    .encabezado h1 {
-      margin: 0;
-      font-size: 28px;
-    }
-
-    .encabezado p {
-      margin-bottom: 0;
-    }
-
-    .contenido {
-      background: white;
-      padding: 25px;
-      border-radius: 0 0 15px 15px;
-      box-shadow: 0 4px 15px rgba(0,0,0,0.1);
-    }
-
-    h2 {
-      color: #333;
-    }
-
-    .actividad {
-      background: #f8f9fa;
-      border-left: 5px solid #1a73e8;
-      padding: 15px;
-      margin-bottom: 15px;
-      border-radius: 8px;
-    }
-
-    .actividad h3 {
-      margin-top: 0;
-      color: #1a73e8;
-    }
-
-    .actividad p {
-      margin: 6px 0;
-    }
-
-    .boton {
-      background: #1a73e8;
-      color: white;
-      border: none;
-      padding: 12px 20px;
-      border-radius: 8px;
-      cursor: pointer;
-      font-size: 16px;
-      margin-bottom: 20px;
-    }
-
-.boton-regresar {
-  background: #6c757d;
-  color: white;
-  border: none;
-  padding: 10px 18px;
-  border-radius: 8px;
-  cursor: pointer;
-  font-size: 15px;
-  margin-bottom: 15px;
-}
-
-.boton:hover {
-  ...
-}
-    
-    .boton:hover {
-      background: #1557b0;
-    }
-
-    .cargando {
-      text-align: center;
-      padding: 30px;
-      color: #666;
-    }
-
-    .error {
-      background: #ffe5e5;
-      color: #b00020;
-      padding: 15px;
-      border-radius: 8px;
-    }
-
-  </style>
-</head>
-
-<body>
-
-  <div class="contenedor">
-
-    <div class="encabezado">
-      <h1>SISTEMA DE REVISIÓN QR</h1>
-      <p>Consulta de actividades</p>
-    </div>
-
-    <div class="contenido">
-
-     <button id="botonActividades" class="boton" onclick="cargarActividades()">
-    Actualizar actividades
-</button>
-
- <button id="botonProfesor" class="boton-qr" onclick="seleccionarTurno()">
-    📷 Escanear código QR
-</button>
-      
-  <button id="botonAlumno" class="boton-qr" onclick="modoEscaneo = 'consulta'; iniciarEscaner()">
-  👤 Consultar avance del alumno
-</button>
-
-      <div id="resultado" class="cargando">
-        Cargando actividades...
-      </div>
-
-      <div id="contenedor-escaner">
-
-    <div class="escaner-box">
-
-        <h2>Escanear código QR</h2>
-
-        <video id="videoQR" autoplay playsinline></video>
-
-        <p id="mensajeQR">
-            Apunta la cámara hacia el código QR
-        </p>
-
-        <button onclick="detenerEscaner()">
-            Cancelar
-        </button>
-
-    </div>
-
-</div>
-
-    </div>
-
-  </div>
-
-
-  <script>
-
-    let turnoSeleccionado = "";
-    let grupoSeleccionado = "";
-    let actividadesGuardadas = [];
-    let alumnoSeleccionado = "";
-
-   function cargarActividades() {
-
-  const resultado = document.getElementById("resultado");
-
-  resultado.innerHTML =
-    '<div class="cargando">Cargando actividades...</div>';
-
-  const API_URL = "https://script.google.com/macros/s/AKfycbwD2VFs1QXroZ2vaquLJyP2thLeAkGOKP4lIoKY9xWeFlclRN4EL3p6RRbHztNAAKIxcQ/exec";
-
-  fetch(API_URL)
-    .then(function(response) {
-
-      if (!response.ok) {
-        throw new Error("No se pudo conectar con el servidor");
+  <!DOCTYPE html>
+  <html lang="es">
+  <head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  
+    <title>Sistema de Revisión QR</title>
+  
+    <style>
+  
+      * {
+        box-sizing: border-box;
       }
-
-      return response.json();
-
-    })
-    .then(function(actividades) {
-
-      console.log("Actividades recibidas:", actividades);
-
-      mostrarActividades(actividades);
-
-    })
-    .catch(function(error) {
-
-      console.error("Error:", error);
-
-      resultado.innerHTML = `
-        <div class="error">
-          Error al cargar actividades: ${error.message}
+  
+      body {
+        font-family: Arial, sans-serif;
+        background: #f4f6f8;
+        margin: 0;
+        padding: 0;
+      }
+  
+      .contenedor {
+        max-width: 900px;
+        margin: 40px auto;
+        padding: 25px;
+      }
+  
+      .encabezado {
+        background: #1a73e8;
+        color: white;
+        padding: 25px;
+        border-radius: 15px 15px 0 0;
+        text-align: center;
+      }
+  
+      .encabezado h1 {
+        margin: 0;
+        font-size: 28px;
+      }
+  
+      .encabezado p {
+        margin-bottom: 0;
+      }
+  
+      .contenido {
+        background: white;
+        padding: 25px;
+        border-radius: 0 0 15px 15px;
+        box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+      }
+  
+      h2 {
+        color: #333;
+      }
+  
+      .actividad {
+        background: #f8f9fa;
+        border-left: 5px solid #1a73e8;
+        padding: 15px;
+        margin-bottom: 15px;
+        border-radius: 8px;
+      }
+  
+      .actividad h3 {
+        margin-top: 0;
+        color: #1a73e8;
+      }
+  
+      .actividad p {
+        margin: 6px 0;
+      }
+  
+      .boton {
+        background: #1a73e8;
+        color: white;
+        border: none;
+        padding: 12px 20px;
+        border-radius: 8px;
+        cursor: pointer;
+        font-size: 16px;
+        margin-bottom: 20px;
+      }
+  
+  .boton-regresar {
+    background: #6c757d;
+    color: white;
+    border: none;
+    padding: 10px 18px;
+    border-radius: 8px;
+    cursor: pointer;
+    font-size: 15px;
+    margin-bottom: 15px;
+  }
+  
+  .boton:hover {
+    ...
+  }
+      
+      .boton:hover {
+        background: #1557b0;
+      }
+  
+      .cargando {
+        text-align: center;
+        padding: 30px;
+        color: #666;
+      }
+  
+      .error {
+        background: #ffe5e5;
+        color: #b00020;
+        padding: 15px;
+        border-radius: 8px;
+      }
+  
+    </style>
+  </head>
+  
+  <body>
+  
+    <div class="contenedor">
+  
+      <div class="encabezado">
+        <h1>SISTEMA DE REVISIÓN QR</h1>
+        <p>Consulta de actividades</p>
+      </div>
+  
+      <div class="contenido">
+  
+       <button id="botonActividades" class="boton" onclick="cargarActividades()">
+      Actualizar actividades
+  </button>
+  
+   <button id="botonProfesor" class="boton-qr" onclick="seleccionarTurno()">
+      📷 Escanear código QR
+  </button>
+        
+    <button id="botonAlumno" class="boton-qr" onclick="modoEscaneo = 'consulta'; iniciarEscaner()">
+    👤 Consultar avance del alumno
+  </button>
+  
+        <div id="resultado" class="cargando">
+          Cargando actividades...
         </div>
-      `;
-
-    });
-
-}
-
-    function mostrarActividades(actividades) {
-
-      const resultado = document.getElementById("resultado");
-
-      if (!actividades || actividades.length === 0) {
-
+  
+        <div id="contenedor-escaner">
+  
+      <div class="escaner-box">
+  
+          <h2>Escanear código QR</h2>
+  
+          <video id="videoQR" autoplay playsinline></video>
+  
+          <p id="mensajeQR">
+              Apunta la cámara hacia el código QR
+          </p>
+  
+          <button onclick="detenerEscaner()">
+              Cancelar
+          </button>
+  
+      </div>
+  
+  </div>
+  
+      </div>
+  
+    </div>
+  
+  
+    <script>
+  
+      let turnoSeleccionado = "";
+      let grupoSeleccionado = "";
+      let actividadesGuardadas = [];
+      let alumnoSeleccionado = "";
+  
+     function cargarActividades() {
+  
+    const resultado = document.getElementById("resultado");
+  
+    resultado.innerHTML =
+      '<div class="cargando">Cargando actividades...</div>';
+  
+    const API_URL = "https://script.google.com/macros/s/AKfycbwD2VFs1QXroZ2vaquLJyP2thLeAkGOKP4lIoKY9xWeFlclRN4EL3p6RRbHztNAAKIxcQ/exec";
+  
+    fetch(API_URL)
+      .then(function(response) {
+  
+        if (!response.ok) {
+          throw new Error("No se pudo conectar con el servidor");
+        }
+  
+        return response.json();
+  
+      })
+      .then(function(actividades) {
+  
+        console.log("Actividades recibidas:", actividades);
+  
+        mostrarActividades(actividades);
+  
+      })
+      .catch(function(error) {
+  
+        console.error("Error:", error);
+  
         resultado.innerHTML = `
           <div class="error">
-            No hay actividades registradas.
+            Error al cargar actividades: ${error.message}
           </div>
         `;
-
-        return;
-      }
-
-
-      let html = "<h2>Actividades disponibles</h2>";
-
-
-      actividades.forEach(function(actividad) {
-
-        html += `
-
-          <div class="actividad" onclick="seleccionarActividad('${actividad.id}')">
-
-            <h3>${actividad.actividad}</h3>
-
-            <p>
-              <strong>Materia:</strong>
-              ${actividad.materia}
-            </p>
-
-            <p>
-              <strong>Grupo:</strong>
-              ${actividad.grupo}
-            </p>
-
-            <p>
-              <strong>ID:</strong>
-              ${actividad.id}
-            </p>
-
-          </div>
-
-        `;
-
+  
       });
-
-
-      resultado.innerHTML = html;
-
-    }
-
-
-    function mostrarError(error) {
-
-      document.getElementById("resultado").innerHTML = `
-
-        <div class="error">
-
-          <strong>Error:</strong><br>
-
-          ${error.message || error}
-
-        </div>
-
-      `;
-
-    }
-function seleccionarActividad(id) {
-
-  const resultadoDiv = document.getElementById("resultado");
-
+  
+  }
+  
+      function mostrarActividades(actividades) {
+  
+        const resultado = document.getElementById("resultado");
+  
+        if (!actividades || actividades.length === 0) {
+  
+          resultado.innerHTML = `
+            <div class="error">
+              No hay actividades registradas.
+            </div>
+          `;
+  
+          return;
+        }
+  
+  
+        let html = "<h2>Actividades disponibles</h2>";
+  
+  
+        actividades.forEach(function(actividad) {
+  
+          html += `
+  
+            <div class="actividad" onclick="seleccionarActividad('${actividad.id}')">
+  
+              <h3>${actividad.actividad}</h3>
+  
+              <p>
+                <strong>Materia:</strong>
+                ${actividad.materia}
+              </p>
+  
+              <p>
+                <strong>Grupo:</strong>
+                ${actividad.grupo}
+              </p>
+  
+              <p>
+                <strong>ID:</strong>
+                ${actividad.id}
+              </p>
+  
+            </div>
+  
+          `;
+  
+        });
+  
+  
+        resultado.innerHTML = html;
+  
+      }
+  
+  
+      function mostrarError(error) {
+  
+        document.getElementById("resultado").innerHTML = `
+  
+          <div class="error">
+  
+            <strong>Error:</strong><br>
+  
+            ${error.message || error}
+  
+          </div>
+  
+        `;
+  
+      }
+  function seleccionarActividad(id) {
+  
+    const resultadoDiv = document.getElementById("resultado");
+  
+    resultadoDiv.innerHTML = `
+      <div class="cargando">
+        Buscando actividad...
+      </div>
+    `;
+  
+    const API_URL = "https://script.google.com/macros/s/AKfycbwD2VFs1QXroZ2vaquLJyP2thLeAkGOKP4lIoKY9xWeFlclRN4EL3p6RRbHztNAAKIxcQ/exec";
+  
+    fetch(API_URL)
+      .then(response => response.json())
+      .then(actividades => {
+  
+        const actividad = actividades.find(a => a.id === id);
+  
+        if (!actividad) {
+  
+          resultadoDiv.innerHTML = `
+            <div class="error">
+              No se encontró ninguna actividad con el código: ${id}
+            </div>
+          `;
+  
+          return;
+        }
+  
+        actividadSeleccionada = actividad;
+  
   resultadoDiv.innerHTML = `
-    <div class="cargando">
-      Buscando actividad...
+  
+    <button id="botonRegresarActividades" class="boton-regresar" onclick="cargarActividades()">
+      ← Regresar a actividades
+  </button>
+  
+    <div class="actividad">
+  
+      <h2>${actividad.actividad}</h2>
+  
+      <p><strong>Materia:</strong> ${actividad.materia}</p>
+  
+      <p><strong>Grupo:</strong> ${actividad.grupo}</p>
+  
+      <p><strong>ID:</strong> ${actividad.id}</p>
+  
+      <button onclick="escanearAlumno()" class="boton-escanear">
+        📷 Escanear alumno
+      </button>
+  
     </div>
+  
   `;
-
-  const API_URL = "https://script.google.com/macros/s/AKfycbwD2VFs1QXroZ2vaquLJyP2thLeAkGOKP4lIoKY9xWeFlclRN4EL3p6RRbHztNAAKIxcQ/exec";
-
-  fetch(API_URL)
-    .then(response => response.json())
-    .then(actividades => {
-
-      const actividad = actividades.find(a => a.id === id);
-
-      if (!actividad) {
-
+  
+      })
+      .catch(error => {
+  
         resultadoDiv.innerHTML = `
           <div class="error">
-            No se encontró ninguna actividad con el código: ${id}
+            Error al buscar la actividad: ${error.message}
           </div>
         `;
-
-        return;
-      }
-
-      actividadSeleccionada = actividad;
-
-resultadoDiv.innerHTML = `
-
-  <button id="botonRegresarActividades" class="boton-regresar" onclick="cargarActividades()">
-    ← Regresar a actividades
-</button>
-
-  <div class="actividad">
-
-    <h2>${actividad.actividad}</h2>
-
-    <p><strong>Materia:</strong> ${actividad.materia}</p>
-
-    <p><strong>Grupo:</strong> ${actividad.grupo}</p>
-
-    <p><strong>ID:</strong> ${actividad.id}</p>
-
-    <button onclick="escanearAlumno()" class="boton-escanear">
-      📷 Escanear alumno
-    </button>
-
-  </div>
-
-`;
-
-    })
-    .catch(error => {
-
-      resultadoDiv.innerHTML = `
-        <div class="error">
-          Error al buscar la actividad: ${error.message}
-        </div>
-      `;
-
-    });
-
-}
-
-    cargarActividades();
-
-
-var streamQR = null;
-var escaneando = false;
-
-    var actividadSeleccionada = null;
-var modoEscaneo = "actividad";
-
-    function escanearAlumno() {
-
-modoEscaneo = "registro";
-
-  iniciarEscaner();
-
-}
-    
-async function iniciarEscaner() {
-
-  const contenedor = document.getElementById("contenedor-escaner");
-  const mensaje = document.getElementById("mensajeQR");
-  const video = document.getElementById("videoQR");
-
-  contenedor.style.display = "block";
-  mensaje.textContent = "Iniciando cámara...";
-
-  try {
-
-    // Detectar si es celular
-    const esMovil = /Android|iPhone|iPad|iPod/i.test(navigator.userAgent);
-
-    let configuracionCamara;
-
-    if (esMovil) {
-
-      // En celular intenta usar cámara trasera
-      configuracionCamara = {
-        video: {
-          facingMode: {
-            ideal: "environment"
-          }
-        },
-        audio: false
-      };
-
-    } else {
-
-      // En computadora usa cualquier cámara disponible
-      configuracionCamara = {
-        video: true,
-        audio: false
-      };
-
-    }
-
-
-    streamQR = await navigator.mediaDevices.getUserMedia(
-      configuracionCamara
-    );
-
-    video.srcObject = streamQR;
-
-    await video.play();
-
-    mensaje.textContent =
-      "Cámara activada. Apunta hacia el código QR.";
-
-
-const detectorQR = new BarcodeDetector({
-  formats: ["qr_code"]
-});
-
-async function detectarQR() {
-
-  if (!streamQR) return;
-
-  try {
-
-    const codigos = await detectorQR.detect(video);
-
-   if (codigos.length > 0) {
-
-   const valorQR = codigos[0].rawValue;
-
-let codigoDetectado = valorQR;
-
-try {
-  const url = new URL(valorQR);
-  const alumnoURL = url.searchParams.get("alumno");
-
-  if (alumnoURL) {
-    codigoDetectado = alumnoURL;
-  }
-} catch (e) {
-  // El QR contiene un código normal
-}
-
-    mensaje.textContent =
-        "Código detectado: " + codigoDetectado;
-
-   if (modoEscaneo === "actividad") {
-
-    buscarActividadQR(codigoDetectado);
-
-} else if (modoEscaneo === "registro") {
-
-    registrarAlumnoQR(codigoDetectado);
-
-} else if (modoEscaneo === "consulta") {
-
-    consultarAvanceAlumno(codigoDetectado);
-
-}
-
-    return;
-
-}
-  } catch (error) {
-
-    console.error("Error leyendo QR:", error);
-
-  }
-
-  requestAnimationFrame(detectarQR);
-
-}
-
-detectarQR();
   
-  } catch (error) {
-
-    console.error("Error de cámara:", error);
-
-    mensaje.textContent =
-      "No se pudo acceder a la cámara. " +
-      error.name + ": " + error.message;
-
+      });
+  
   }
-
-}
-
-
-function detenerEscaner() {
-
-  const contenedor = document.getElementById("contenedor-escaner");
-  const video = document.getElementById("videoQR");
-
-  if (streamQR) {
-
-    streamQR.getTracks().forEach(track => track.stop());
-
-    streamQR = null;
-
+  
+      cargarActividades();
+  
+  
+  var streamQR = null;
+  var escaneando = false;
+  
+      var actividadSeleccionada = null;
+  var modoEscaneo = "actividad";
+  
+      function escanearAlumno() {
+  
+  modoEscaneo = "registro";
+  
+    iniciarEscaner();
+  
   }
-
-  video.srcObject = null;
-
-  contenedor.style.display = "none";
-
-}
-
       
-    function buscarActividadQR(idQR) {
-
-  idQR = idQR.trim();
-
-  detenerEscaner();
-
-  document.getElementById("resultado").innerHTML = `
-    <div class="cargando">
-      Buscando actividad...
-    </div>
-  `;
-
-  seleccionarActividad(idQR);
-
-}
-
-    function escanearAlumno() {
-
-   modoEscaneo = "registro";
-      
-  iniciarEscaner();
-
-}
-
-function registrarAlumnoQR(codigoAlumno) {
-  alumnoSeleccionado = codigoAlumno;
-
-detenerEscaner();
-
-mostrarActividadesParaAlumno(codigoAlumno);
-return;
-
-    detenerEscaner();
-
-    document.getElementById("resultado").innerHTML = `
-        <div class="cargando">
-            Registrando alumno...
-        </div>
-    `;
-
-  const API_URL = "https://script.google.com/macros/s/AKfycbwD2VFs1QXroZ2vaquLJyP2thLeAkGOKP4lIoKY9xWeFlclRN4EL3p6RRbHztNAAKIxcQ/exec";
-
-fetch(API_URL, {
-    method: "POST",
-    body: JSON.stringify({
-        alumno: codigoAlumno,
-        actividad: actividadSeleccionada
-    })
-})
-.then(response => response.json())
-.then(datos => {
-
-    if (datos.success) {
-
-        document.getElementById("resultado").innerHTML = `
-            <div class="exito">
-                <h2>✓ Alumno registrado correctamente</h2>
-
-                <p><strong>Alumno:</strong> ${datos.alumno}</p>
-
-                <button onclick="iniciarEscaner()" class="boton-escanear">
-    📷 Escanear siguiente alumno
-</button>
-
-<button onclick="seleccionarActividadGrupo(grupoSeleccionado)" class="boton-regresar" style="display:block; margin-top:15px;">
-  ← Regresar a actividades
-</button>
-
-            </div>
-        `;
-
-      setTimeout(() => {
-  iniciarEscaner();
-}, 800);
-
-    } else {
-    document.getElementById("resultado").innerHTML = `
-        <div class="error">
-            ${datos.mensaje}
-
-            <button onclick="regresarAActividades()" 
-                    class="boton-regresar" 
-                    style="display:block; margin:15px auto 0;">
-                ← Regresar a actividades
-            </button>
-        </div>
-    `;
-}
-
-})
-.catch(error => {
-
-    document.getElementById("resultado").innerHTML = `
-        <div class="error">
-            Error al registrar al alumno.
-        </div>
-    `;
-
-    console.error(error);
-
-});
-
+  async function iniciarEscaner() {
+  
+    const contenedor = document.getElementById("contenedor-escaner");
+    const mensaje = document.getElementById("mensajeQR");
+    const video = document.getElementById("videoQR");
+  
+    contenedor.style.display = "block";
+    mensaje.textContent = "Iniciando cámara...";
+  
+    try {
+  
+      // Detectar si es celular
+      const esMovil = /Android|iPhone|iPad|iPod/i.test(navigator.userAgent);
+  
+      let configuracionCamara;
+  
+      if (esMovil) {
+  
+        // En celular intenta usar cámara trasera
+        configuracionCamara = {
+          video: {
+            facingMode: {
+              ideal: "environment"
+            }
+          },
+          audio: false
+        };
+  
+      } else {
+  
+        // En computadora usa cualquier cámara disponible
+        configuracionCamara = {
+          video: true,
+          audio: false
+        };
+  
+      }
+  
+  
+      streamQR = await navigator.mediaDevices.getUserMedia(
+        configuracionCamara
+      );
+  
+      video.srcObject = streamQR;
+  
+      await video.play();
+  
+      mensaje.textContent =
+        "Cámara activada. Apunta hacia el código QR.";
+  
+  
+  const detectorQR = new BarcodeDetector({
+    formats: ["qr_code"]
+  });
+  
+  async function detectarQR() {
+  
+    if (!streamQR) return;
+  
+    try {
+  
+      const codigos = await detectorQR.detect(video);
+  
+     if (codigos.length > 0) {
+  
+     const valorQR = codigos[0].rawValue;
+  
+  let codigoDetectado = valorQR;
+  
+  try {
+    const url = new URL(valorQR);
+    const alumnoURL = url.searchParams.get("alumno");
+  
+    if (alumnoURL) {
+      codigoDetectado = alumnoURL;
     }
-
-   
-function mostrarActividadesParaAlumno(codigoAlumno) {
-  const resultado = document.getElementById("resultado");
-
-  resultado.innerHTML = `
-    <div class="cargando">
-      <h2>Consultando actividades...</h2>
-      <p>Espera un momento.</p>
-    </div>
-  `;
-
-  const API_URL = "https://script.google.com/macros/s/AKfycbwD2VFs1QXroZ2vaquLJyP2thLeAkGOKP4lIoKY9xWeFlclRN4EL3p6RRbHztNAAKIxcQ/exec";
-
+  } catch (e) {
+    // El QR contiene un código normal
+  }
+  
+      mensaje.textContent =
+          "Código detectado: " + codigoDetectado;
+  
+     if (modoEscaneo === "actividad") {
+  
+      buscarActividadQR(codigoDetectado);
+  
+  } else if (modoEscaneo === "registro") {
+  
+      registrarAlumnoQR(codigoDetectado);
+  
+  } else if (modoEscaneo === "consulta") {
+  
+      consultarAvanceAlumno(codigoDetectado);
+  
+  }
+  
+      return;
+  
+  }
+    } catch (error) {
+  
+      console.error("Error leyendo QR:", error);
+  
+    }
+  
+    requestAnimationFrame(detectarQR);
+  
+  }
+  
+  detectarQR();
+    
+    } catch (error) {
+  
+      console.error("Error de cámara:", error);
+  
+      mensaje.textContent =
+        "No se pudo acceder a la cámara. " +
+        error.name + ": " + error.message;
+  
+    }
+  
+  }
+  
+  
+  function detenerEscaner() {
+  
+    const contenedor = document.getElementById("contenedor-escaner");
+    const video = document.getElementById("videoQR");
+  
+    if (streamQR) {
+  
+      streamQR.getTracks().forEach(track => track.stop());
+  
+      streamQR = null;
+  
+    }
+  
+    video.srcObject = null;
+  
+    contenedor.style.display = "none";
+  
+  }
+  
+        
+      function buscarActividadQR(idQR) {
+  
+    idQR = idQR.trim();
+  
+    detenerEscaner();
+  
+    document.getElementById("resultado").innerHTML = `
+      <div class="cargando">
+        Buscando actividad...
+      </div>
+    `;
+  
+    seleccionarActividad(idQR);
+  
+  }
+  
+      function escanearAlumno() {
+  
+     modoEscaneo = "registro";
+        
+    iniciarEscaner();
+  
+  }
+  
+  function registrarAlumnoQR(codigoAlumno) {
+    alumnoSeleccionado = codigoAlumno;
+  
+  detenerEscaner();
+  
+  mostrarActividadesParaAlumno(codigoAlumno);
+  return;
+  
+      detenerEscaner();
+  
+      document.getElementById("resultado").innerHTML = `
+          <div class="cargando">
+              Registrando alumno...
+          </div>
+      `;
+  
+    const API_URL = "https://script.google.com/macros/s/AKfycbwD2VFs1QXroZ2vaquLJyP2thLeAkGOKP4lIoKY9xWeFlclRN4EL3p6RRbHztNAAKIxcQ/exec";
+  
   fetch(API_URL, {
-    method: "POST",
-    body: JSON.stringify({
-      accion: "avance",
-      alumno: codigoAlumno
-    })
+      method: "POST",
+      body: JSON.stringify({
+          alumno: codigoAlumno,
+          actividad: actividadSeleccionada
+      })
   })
   .then(response => response.json())
   .then(datos => {
-    if (!datos.alumno) {
-      resultado.innerHTML = `
-        <div class="error">
-          ${datos.mensaje || "No se encontró el alumno."}
+  
+      if (datos.success) {
+  
+          document.getElementById("resultado").innerHTML = `
+              <div class="exito">
+                  <h2>✓ Alumno registrado correctamente</h2>
+  
+                  <p><strong>Alumno:</strong> ${datos.alumno}</p>
+  
+                  <button onclick="iniciarEscaner()" class="boton-escanear">
+      📷 Escanear siguiente alumno
+  </button>
+  
+  <button onclick="seleccionarActividadGrupo(grupoSeleccionado)" class="boton-regresar" style="display:block; margin-top:15px;">
+    ← Regresar a actividades
+  </button>
+  
+              </div>
+          `;
+  
+        setTimeout(() => {
+    iniciarEscaner();
+  }, 800);
+  
+      } else {
+      document.getElementById("resultado").innerHTML = `
+          <div class="error">
+              ${datos.mensaje}
+  
+              <button onclick="regresarAActividades()" 
+                      class="boton-regresar" 
+                      style="display:block; margin:15px auto 0;">
+                  ← Regresar a actividades
+              </button>
+          </div>
+      `;
+  }
+  
+  })
+  .catch(error => {
+  
+      document.getElementById("resultado").innerHTML = `
+          <div class="error">
+              Error al registrar al alumno.
+          </div>
+      `;
+  
+      console.error(error);
+  
+  });
+  
+      }
+  
+     
+  
+  function mostrarActividadesParaAlumno(codigoAlumno) {
+    const resultado = document.getElementById("resultado");
+  
+    resultado.innerHTML = `
+      <div class="cargando">
+        <h2>Consultando actividades...</h2>
+        <p>Espera un momento.</p>
+      </div>
+    `;
+  
+    const API_URL = "https://script.google.com/macros/s/AKfycbwD2VFs1QXroZ2vaquLJyP2thLeAkGOKP4lIoKY9xWeFlclRN4EL3p6RRbHztNAAKIxcQ/exec";
+  
+    fetch(API_URL, {
+      method: "POST",
+      body: JSON.stringify({
+        accion: "avance",
+        alumno: codigoAlumno
+      })
+    })
+    .then(response => response.json())
+    .then(datos => {
+      if (!datos.alumno) {
+        resultado.innerHTML = `
+          <div class="error">
+            ${datos.mensaje || "No se encontró el alumno."}
+          </div>
+        `;
+        return;
+      }
+  
+      actividadesGuardadas = datos.actividades || [];
+  
+      // Obtener las materias registradas para este grupo.
+      const materiasDisponibles = [
+        ...new Set(
+          actividadesGuardadas
+            .map(a => String(a.materia || "").trim())
+            .filter(Boolean)
+        )
+      ];
+  
+      let html = `
+        <div class="exito">
+          <h2>${datos.alumno.nombre}</h2>
+          <p><strong>Grupo:</strong> ${datos.alumno.grupo}</p>
+          <h3>Selecciona las actividades y escribe sus calificaciones</h3>
+          <p>Las calificaciones deben estar entre 0 y 10.</p>
+      `;
+  
+      actividadesGuardadas.forEach((actividad, indice) => {
+        const revisada = actividad.estado === "REVISADA";
+        const materiaActividad = String(actividad.materia || "").trim();
+        const esGeneral = materiaActividad === "";
+  
+        const opcionesMateria = materiasDisponibles.map(materia => `
+          <option value="${materia.replace(/&/g, "&amp;").replace(/"/g, "&quot;").replace(/</g, "&lt;").replace(/>/g, "&gt;")}">
+            ${materia.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;")}
+          </option>
+        `).join("");
+  
+        html += `
+          <div class="actividad">
+            <label style="display:block;padding:8px;">
+              <input
+                type="checkbox"
+                class="actividad-multiple"
+                value="${actividad.id}"
+                data-indice="${indice}"
+                ${revisada ? "checked disabled" : ""}
+                style="width:auto;margin-right:8px;"
+              >
+              <strong>${esGeneral ? "ACTIVIDAD GENERAL" : materiaActividad}</strong>
+              - ${actividad.actividad}
+              ${revisada ? " ✅ REVISADA" : ""}
+            </label>
+  
+            ${!revisada && esGeneral ? `
+              <label for="materia_general_${indice}">
+                Materia para esta calificación
+              </label>
+              <select
+                id="materia_general_${indice}"
+                class="materia-general"
+                data-actividad-id="${actividad.id}"
+                style="width:100%;padding:10px;margin-bottom:8px;"
+              >
+                <option value="">Selecciona una materia</option>
+                ${opcionesMateria}
+              </select>
+            ` : ""}
+  
+            ${!revisada ? `
+              <label for="calificacion_${indice}">
+                Calificación (0 a 10)
+              </label>
+              <input
+                type="number"
+                id="calificacion_${indice}"
+                class="calificacion-actividad"
+                data-actividad-id="${actividad.id}"
+                min="0"
+                max="10"
+                step="0.1"
+                placeholder="Escribe la calificación"
+                style="width:100%;padding:10px;margin-bottom:8px;"
+              >
+            ` : ""}
+          </div>
+        `;
+      });
+  
+      html += `
+          <button
+            onclick="registrarActividadesSeleccionadas()"
+            class="boton"
+            style="margin-top:15px;">
+            ✅ Registrar actividades y calificaciones
+          </button>
+  
+          <button
+            onclick="seleccionarActividadGrupo(grupoSeleccionado)"
+            class="boton-regresar"
+            style="display:block;margin:10px auto;">
+            ← Regresar a actividades
+          </button>
         </div>
       `;
-      return;
-    }
-
-    actividadesGuardadas = datos.actividades || [];
-
-    let html = `
-      <div class="exito">
-        <h2>${datos.alumno.nombre}</h2>
-        <p><strong>Grupo:</strong> ${datos.alumno.grupo}</p>
-        <h3>Selecciona las actividades y escribe sus calificaciones</h3>
-        <p>Las calificaciones deben estar entre 0 y 10.</p>
-    `;
-
-    datos.actividades.forEach((actividad, indice) => {
-      const revisada = actividad.estado === "REVISADA";
-
-      html += `
-        <div class="actividad">
-          <label style="display:block;padding:8px;">
-            <input
-              type="checkbox"
-              class="actividad-multiple"
-              value="${actividad.id}"
-              ${revisada ? "checked disabled" : ""}
-              style="width:auto;margin-right:8px;"
-            >
-            <strong>${actividad.materia}</strong> - ${actividad.actividad}
-            ${revisada ? " ✅ REVISADA" : ""}
-          </label>
-
-          ${!revisada ? `
-            <label for="calificacion_${indice}">
-              Calificación (0 a 10)
-            </label>
-            <input
-              type="number"
-              id="calificacion_${indice}"
-              class="calificacion-actividad"
-              data-actividad-id="${actividad.id}"
-              min="0"
-              max="10"
-              step="0.1"
-              placeholder="Escribe la calificación"
-              style="width:100%;padding:10px;margin-bottom:8px;"
-            >
-          ` : ""}
+  
+      resultado.innerHTML = html;
+    })
+    .catch(error => {
+      console.error(error);
+      resultado.innerHTML = `
+        <div class="error">
+          Error al consultar las actividades.
         </div>
       `;
     });
-
-    html += `
-        <button
-          onclick="registrarActividadesSeleccionadas()"
-          class="boton"
-          style="margin-top:15px;">
-          ✅ Registrar actividades y calificaciones
-        </button>
-
-        <button
-          onclick="seleccionarActividadGrupo(grupoSeleccionado)"
-          class="boton-regresar"
-          style="display:block;margin:10px auto;">
-          ← Regresar a actividades
-        </button>
+  }
+  
+      
+  function consultarAvanceAlumno(codigoAlumno) {
+  
+    detenerEscaner();
+  
+    document.getElementById("resultado").innerHTML = `
+      <div class="cargando">
+        Consultando avance y asistencia del alumno...
       </div>
     `;
-
-    resultado.innerHTML = html;
-  })
-  .catch(error => {
-    console.error(error);
-    resultado.innerHTML = `
-      <div class="error">
-        Error al consultar las actividades.
-      </div>
-    `;
-  });
-}
-
-
+  
+    const API_URL = "https://script.google.com/macros/s/AKfycbwD2VFs1QXroZ2vaquLJyP2thLeAkGOKP4lIoKY9xWeFlclRN4EL3p6RRbHztNAAKIxcQ/exec";
+  
+    fetch(API_URL, {
+      method: "POST",
+      body: JSON.stringify({
+        accion: "avance",
+        alumno: codigoAlumno
+      })
+    })
+    .then(response => response.json())
+    .then(datos => {
+  
+      if (!datos.alumno) {
+        document.getElementById("resultado").innerHTML = `
+          <div class="error">
+            ${datos.mensaje || "No se encontró el alumno."}
+          </div>
+        `;
+        return;
+      }
+  
+      actividadesGuardadas = (datos.actividades || []).map(actividad => ({
+    ...actividad,
+    materia: String(actividad.materia || "").trim()
+  }));
+  
+      const asistencia = datos.asistencia || {};
+  
+      console.log("Respuesta completa:", datos);
+  console.log("Asistencia recibida:", datos.asistencia);
+  
+      let lista = "";
+  
+      datos.actividades.forEach(actividad => {
+  
+        const estado = actividad.estado === "REVISADA"
+          ? "✅ REVISADA"
+          : "⏳ PENDIENTE";
+  
+        lista += `
+          <div class="actividad">
+            <p>
+              <strong>${actividad.materia}</strong> -
+              ${actividad.actividad}
+            </p>
+            <p>${estado}</p>
+          </div>
+        `;
+      });
+  
+      const asistenciaHtml = `
+        <section style="
+          margin:25px 0;
+          padding:20px;
+          background:#f8f9fa;
+          border-radius:12px;
+          border:1px solid #e0e0e0;
+        ">
+          <h2 style="margin-top:0;">📅 Mi asistencia</h2>
+  
+          <div style="
+            display:grid;
+            grid-template-columns:repeat(auto-fit,minmax(120px,1fr));
+            gap:12px;
+          ">
+            <div style="background:#e6f4ea;padding:15px;border-radius:10px;text-align:center;">
+              <div style="font-size:28px;font-weight:bold;color:#188038;">
+                ${asistencia.asistencias ?? 0}
+              </div>
+              <div>Asistencias</div>
+            </div>
+  
+            <div style="background:#fce8e6;padding:15px;border-radius:10px;text-align:center;">
+              <div style="font-size:28px;font-weight:bold;color:#b3261e;">
+                ${asistencia.faltas ?? 0}
+              </div>
+              <div>Inasistencias</div>
+            </div>
+  
+            <div style="background:#e8f0fe;padding:15px;border-radius:10px;text-align:center;">
+              <div style="font-size:28px;font-weight:bold;color:#1967d2;">
+                ${asistencia.justificadas ?? 0}
+              </div>
+              <div>Justificadas</div>
+            </div>
+          </div>
+  
+          <div style="margin-top:20px;">
+            <p>
+              <strong>Porcentaje de asistencia:</strong>
+              ${asistencia.porcentaje ?? 0}%
+            </p>
+  
+            <div style="height:12px;background:#e0e0e0;border-radius:10px;overflow:hidden;">
+              <div style="
+                height:100%;
+                width:${Math.min(100, Math.max(0, Number(asistencia.porcentaje) || 0))}%;
+                background:#188038;
+                border-radius:10px;
+              "></div>
+            </div>
+  
+            <p style="color:#666;font-size:13px;">
+              Días registrados: ${asistencia.totalDias ?? 0}
+            </p>
+          </div>
+        </section>
+      `;
+  
+      document.getElementById("resultado").innerHTML = `
+        <div class="exito">
+  
+          <h2>${datos.alumno.nombre}</h2>
+          <p><strong>Grupo:</strong> ${datos.alumno.grupo}</p>
+  
+          <h2>📚 Mi avance académico</h2>
+          <h3>Actividades revisadas: ${datos.porcentaje}%</h3>
+  
+          <p>
+            ✅ Revisadas: ${datos.revisadas}
+            <br>
+            ⏳ Pendientes: ${datos.pendientes}
+            <br>
+            📚 Total: ${datos.total}
+          </p>
+  
+          ${asistenciaHtml}
+  
+          <h2>Detalle de actividades</h2>
+          ${lista}
+  
+        </div>
+      `;
+    })
+    .catch(error => {
+  
+      console.error("Error al consultar el avance:", error);
+  
+      document.getElementById("resultado").innerHTML = `
+        <div class="error">
+          Error al consultar el avance y la asistencia.
+          Intenta nuevamente.
+        </div>
+      `;
+    });
+  }
+  
+      function revisarAlumnoDesdeURL() {
+  
+    const parametros = new URLSearchParams(window.location.search);
+    const alumno = parametros.get("alumno");
+  
+   if (alumno) {
+  
+      document.getElementById("botonProfesor").style.display = "none";
+      document.getElementById("botonAlumno").style.display = "none";
+    document.getElementById("botonActividades").style.display = "none";
    
+      consultarAvanceAlumno(alumno);
+  }
+  
+  }
+   window.addEventListener("load", revisarAlumnoDesdeURL);   
+  
+      revisarAlumnoDesdeURL();
+  
+      function seleccionarGrupo(turno) {
+        turnoSeleccionado = turno;
+      document.getElementById("resultado").innerHTML = `
+          <div class="cargando">
+              <h2>Selecciona el grupo</h2>
+  
+             <button class="boton" onclick="seleccionarActividadGrupo('1°A')">1° A</button>
+  <button class="boton" onclick="seleccionarActividadGrupo('1°B')">1° B</button>
+  <button class="boton" onclick="seleccionarActividadGrupo('1°C')">1° C</button>
+  
+  <button class="boton" onclick="seleccionarActividadGrupo('2°A')">2° A</button>
+  <button class="boton" onclick="seleccionarActividadGrupo('2°B')">2° B</button>
+  <button class="boton" onclick="seleccionarActividadGrupo('2°C')">2° C</button>
+  
+  <button class="boton" onclick="seleccionarActividadGrupo('3°A')">3° A</button>
+  <button class="boton" onclick="seleccionarActividadGrupo('3°B')">3° B</button>
+  <button class="boton" onclick="seleccionarActividadGrupo('3°C')">3° C</button>
+          </div>
+      `;
+  }
+  
+      function regresarAActividades() {
+    const grupo = grupoSeleccionado;
+    const resultadoDiv = document.getElementById("resultado");
+  
+    if (actividadesGuardadas.length > 0) {
+  
+      const actividadesGrupo = actividadesGuardadas.filter(a =>
+        String(a.grupo).trim() === String(grupo).trim() ||
+        String(a.grupo).trim() === ""
+      );
+  
+      let html = `
+        <div class="cargando">
+          <h2>Selecciona la actividad</h2>
+          <p>Grupo: ${grupo}</p>
+      `;
+  
+      actividadesGrupo.forEach(actividad => {
+        html += `
+          <button class="boton" onclick="seleccionarActividad('${actividad.id}')">
+            ${actividad.materia} - ${actividad.actividad}
+          </button>
+        `;
+      });
+  
+      html += `</div>`;
+      resultadoDiv.innerHTML = html;
+  
+    } else {
+      seleccionarActividadGrupo(grupo);
+    }
+  }
+  
+      function seleccionarActividadGrupo(grupo) {
+        grupoSeleccionado = grupo;
+      const resultadoDiv = document.getElementById("resultado");
+  
+      resultadoDiv.innerHTML = `
+          <div class="cargando">
+              <h2>Selecciona la actividad</h2>
+              <p>Grupo: ${grupo}</p>
+              <p>Buscando actividades...</p>
+          </div>
+      `;
+  
+      const API_URL = "https://script.google.com/macros/s/AKfycbwD2VFs1QXroZ2vaquLJyP2thLeAkGOKP4lIoKY9xWeFlclRN4EL3p6RRbHztNAAKIxcQ/exec";
+  
+      fetch(API_URL)
+          .then(response => response.json())
+          .then(actividades => {
+            actividadesGuardadas = actividades;
+  
+              const actividadesGrupo = actividades.filter(a =>
+                  String(a.grupo).trim() === String(grupo).trim() ||
+                  String(a.grupo).trim() === ""
+              );
+  
+              if (actividadesGrupo.length === 0) {
+                  resultadoDiv.innerHTML = `
+                      <div class="error">
+                          No hay actividades registradas para el grupo ${grupo}.
+                      </div>
+                  `;
+                  return;
+              }
+  
+              let html = `
+                  <div class="cargando">
+                      <h2>Selecciona la actividad</h2>
+                      <p>Grupo: ${grupo}</p>
+              `;
+  
+              actividadesGrupo.forEach(actividad => {
+                  html += `
+                      <button class="boton" onclick="seleccionarActividad('${actividad.id}')">
+                          ${actividad.materia} - ${actividad.actividad}
+                      </button>
+                  `;
+              });
+  
+              html += `</div>`;
+  
+              resultadoDiv.innerHTML = html;
+          })
+          .catch(error => {
+              resultadoDiv.innerHTML = `
+                  <div class="error">
+                      Error al cargar las actividades: ${error.message}
+                  </div>
+              `;
+          });
+  }
+      
+  function seleccionarTurno() {
+      document.getElementById("resultado").innerHTML = `
+          <div class="cargando">
+              <h2>Selecciona el turno</h2>
+  
+              <button class="boton" onclick="turnoSeleccionado='M'; seleccionarGrupo('M')">
+                  ☀️ MATUTINO
+              </button>
+  
+              <button class="boton" onclick="turnoSeleccionado='V'; seleccionarGrupo('V')">
+                  🌙 VESPERTINO
+              </button>
+          </div>
+      `;
+  }
+
+
 async function registrarActividadesSeleccionadas() {
   const trimestreSeleccionado =
     localStorage.getItem("trimestreSeleccionadoQR") || "1";
 
   const seleccionadas = Array.from(
     document.querySelectorAll(".actividad-multiple:checked:not(:disabled)")
-  ).map(cb => cb.value);
+  );
 
   if (seleccionadas.length === 0) {
     alert("Selecciona al menos una actividad.");
     return;
   }
 
-  const actividades = seleccionadas.map(id =>
-    actividadesGuardadas.find(a => String(a.id) === String(id))
-  );
-
-  if (actividades.some(a => !a)) {
-    alert("No se encontró alguna actividad seleccionada. Actualiza e intenta de nuevo.");
-    return;
-  }
-
-  // Validar todas las notas antes de registrar cualquier revisión.
   const registros = [];
 
-  for (const actividad of actividades) {
-    const campo = document.querySelector(
-      `.calificacion-actividad[data-actividad-id="${CSS.escape(String(actividad.id))}"]`
+  for (const checkbox of seleccionadas) {
+    const indice = checkbox.dataset.indice;
+
+    const actividad = actividadesGuardadas.find(
+      a => String(a.id) === String(checkbox.value)
     );
 
+    if (!actividad) {
+      alert("No se encontró la actividad seleccionada.");
+      return;
+    }
+
+    const campo = document.getElementById(`calificacion_${indice}`);
+
     if (!campo || campo.value.trim() === "") {
-      alert(`Escribe la calificación de la actividad: ${actividad.actividad}`);
-      if (campo) campo.focus();
+      alert(`Escribe la calificación de ${actividad.actividad}.`);
+      campo?.focus();
       return;
     }
 
     const nota = Number(campo.value);
 
     if (!Number.isFinite(nota) || nota < 0 || nota > 10) {
-      alert(`La calificación de "${actividad.actividad}" debe estar entre 0 y 10.`);
+      alert(`La calificación de ${actividad.actividad} debe estar entre 0 y 10.`);
       campo.focus();
       return;
     }
 
-    registros.push({ actividad, calificacion: nota });
+    let materia = String(actividad.materia || "").trim();
+
+    if (!materia) {
+      const selector = document.getElementById(`materia_general_${indice}`);
+      materia = String(selector?.value || "").trim();
+
+      if (!materia) {
+        alert(`Selecciona la materia de ${actividad.actividad}.`);
+        selector?.focus();
+        return;
+      }
+    }
+
+    registros.push({
+      actividad,
+      materia,
+      calificacion: nota
+    });
   }
 
   const resultado = document.getElementById("resultado");
+
   resultado.innerHTML = `
     <div class="cargando">
-      <h2>Guardando revisiones y calificaciones...</h2>
-      <p>Espera un momento y no cierres esta página.</p>
+      <h2>Guardando calificaciones...</h2>
+      <p>Espera un momento.</p>
     </div>
   `;
 
   const API_URL = "https://script.google.com/macros/s/AKfycbwD2VFs1QXroZ2vaquLJyP2thLeAkGOKP4lIoKY9xWeFlclRN4EL3p6RRbHztNAAKIxcQ/exec";
 
   try {
-    // Obtener datos actuales del alumno desde Apps Script.
-    const respuestaAvance = await fetch(API_URL, {
+    const respuesta = await fetch(API_URL, {
       method: "POST",
       body: JSON.stringify({
         accion: "avance",
@@ -794,21 +1151,20 @@ async function registrarActividadesSeleccionadas() {
       })
     });
 
-    const datosAvance = await respuestaAvance.json();
+    const datos = await respuesta.json();
 
-    if (!datosAvance.alumno) {
-      throw new Error(datosAvance.mensaje || "No se encontró el alumno.");
+    if (!datos.alumno) {
+      throw new Error(datos.mensaje || "No se encontró al alumno.");
     }
 
-    const alumno = datosAvance.alumno;
+    const alumno = datos.alumno;
     const grupo = String(alumno.grupo || "").trim();
     const turno = String(alumno.turno || "").trim();
 
     if (!alumno.id || !grupo || !turno) {
-      throw new Error("Faltan el ID, grupo o turno del alumno. No se guardó ningún registro.");
+      throw new Error("Faltan los datos del alumno, grupo o turno.");
     }
 
-    // Guardar primero las calificaciones.
     for (const registro of registros) {
       const respuestaNota = await fetch(API_URL, {
         method: "POST",
@@ -817,7 +1173,7 @@ async function registrarActividadesSeleccionadas() {
           alumnoId: alumno.id,
           grupo,
           turno,
-          materia: registro.actividad.materia,
+          materia: registro.materia,
           actividadId: registro.actividad.id,
           trimestre: trimestreSeleccionado,
           calificacion: registro.calificacion
@@ -829,38 +1185,38 @@ async function registrarActividadesSeleccionadas() {
       if (!resultadoNota.success) {
         throw new Error(
           resultadoNota.mensaje ||
-          `No se pudo guardar la calificación de ${registro.actividad.actividad}.`
+          `No se pudo guardar ${registro.actividad.actividad}.`
         );
       }
     }
 
-    // Registrar las revisiones mediante el mecanismo existente.
-    for (const registro of registros) {
-      const respuestaRevision = await fetch(API_URL, {
-        method: "POST",
-        body: JSON.stringify({
-          alumno: alumnoSeleccionado,
-          actividad: registro.actividad
-        })
-      });
+for (const registro of registros) {
+  const respuestaRevision = await fetch(API_URL, {
+    method: "POST",
+    body: JSON.stringify({
+      alumno: alumnoSeleccionado,
+      actividad: registro.actividad,
+      materia: registro.materia,
+      trimestre: trimestreSeleccionado
+    })
+  });
 
-      const resultadoRevision = await respuestaRevision.json();
+  const datosRevision = await respuestaRevision.json();
 
-      if (!resultadoRevision.success) {
-        throw new Error(
-          resultadoRevision.mensaje ||
-          `La calificación se guardó, pero no se pudo registrar la revisión de ${registro.actividad.actividad}.`
-        );
-      }
-    }
-
+  if (!datosRevision.success) {
+    throw new Error(
+      datosRevision.mensaje || "No se pudo registrar la revisión."
+    );
+  }
+}
+    
     resultado.innerHTML = `
       <div class="exito">
-        <h2>✓ Revisiones y calificaciones guardadas</h2>
+        <h2>✓ Calificaciones guardadas</h2>
         <p>Alumno: <strong>${alumno.nombre}</strong></p>
         <p>Grupo: <strong>${grupo}</strong></p>
         <p>Trimestre: <strong>${trimestreSeleccionado}</strong></p>
-        <p>Actividades guardadas: <strong>${registros.length}</strong></p>
+        <p>Calificaciones guardadas: <strong>${registros.length}</strong></p>
 
         <button onclick="iniciarEscaner()" class="boton-escanear">
           📷 Escanear siguiente alumno
@@ -876,321 +1232,19 @@ async function registrarActividadesSeleccionadas() {
     `;
   } catch (error) {
     console.error(error);
+
     resultado.innerHTML = `
       <div class="error">
-        <h2>No se completó todo el registro</h2>
+        <h2>Error al guardar</h2>
         <p>${error.message}</p>
-        <p>Revisa las calificaciones antes de volver a intentar. Algunas notas podrían haberse guardado.</p>
+        <p>Comprueba las calificaciones antes de volver a intentar, porque algunas podrían haberse guardado.</p>
       </div>
     `;
   }
 }
 
-    
-function consultarAvanceAlumno(codigoAlumno) {
-
-  detenerEscaner();
-
-  document.getElementById("resultado").innerHTML = `
-    <div class="cargando">
-      Consultando avance y asistencia del alumno...
-    </div>
-  `;
-
-  const API_URL = "https://script.google.com/macros/s/AKfycbwD2VFs1QXroZ2vaquLJyP2thLeAkGOKP4lIoKY9xWeFlclRN4EL3p6RRbHztNAAKIxcQ/exec";
-
-  fetch(API_URL, {
-    method: "POST",
-    body: JSON.stringify({
-      accion: "avance",
-      alumno: codigoAlumno
-    })
-  })
-  .then(response => response.json())
-  .then(datos => {
-
-    if (!datos.alumno) {
-      document.getElementById("resultado").innerHTML = `
-        <div class="error">
-          ${datos.mensaje || "No se encontró el alumno."}
-        </div>
-      `;
-      return;
-    }
-
-    actividadesGuardadas = datos.actividades || [];
-
-    const asistencia = datos.asistencia || {};
-
-    console.log("Respuesta completa:", datos);
-console.log("Asistencia recibida:", datos.asistencia);
-
-    let lista = "";
-
-    datos.actividades.forEach(actividad => {
-
-      const estado = actividad.estado === "REVISADA"
-        ? "✅ REVISADA"
-        : "⏳ PENDIENTE";
-
-      lista += `
-        <div class="actividad">
-          <p>
-            <strong>${actividad.materia}</strong> -
-            ${actividad.actividad}
-          </p>
-          <p>${estado}</p>
-        </div>
-      `;
-    });
-
-    const asistenciaHtml = `
-      <section style="
-        margin:25px 0;
-        padding:20px;
-        background:#f8f9fa;
-        border-radius:12px;
-        border:1px solid #e0e0e0;
-      ">
-        <h2 style="margin-top:0;">📅 Mi asistencia</h2>
-
-        <div style="
-          display:grid;
-          grid-template-columns:repeat(auto-fit,minmax(120px,1fr));
-          gap:12px;
-        ">
-          <div style="background:#e6f4ea;padding:15px;border-radius:10px;text-align:center;">
-            <div style="font-size:28px;font-weight:bold;color:#188038;">
-              ${asistencia.asistencias ?? 0}
-            </div>
-            <div>Asistencias</div>
-          </div>
-
-          <div style="background:#fce8e6;padding:15px;border-radius:10px;text-align:center;">
-            <div style="font-size:28px;font-weight:bold;color:#b3261e;">
-              ${asistencia.faltas ?? 0}
-            </div>
-            <div>Inasistencias</div>
-          </div>
-
-          <div style="background:#e8f0fe;padding:15px;border-radius:10px;text-align:center;">
-            <div style="font-size:28px;font-weight:bold;color:#1967d2;">
-              ${asistencia.justificadas ?? 0}
-            </div>
-            <div>Justificadas</div>
-          </div>
-        </div>
-
-        <div style="margin-top:20px;">
-          <p>
-            <strong>Porcentaje de asistencia:</strong>
-            ${asistencia.porcentaje ?? 0}%
-          </p>
-
-          <div style="height:12px;background:#e0e0e0;border-radius:10px;overflow:hidden;">
-            <div style="
-              height:100%;
-              width:${Math.min(100, Math.max(0, Number(asistencia.porcentaje) || 0))}%;
-              background:#188038;
-              border-radius:10px;
-            "></div>
-          </div>
-
-          <p style="color:#666;font-size:13px;">
-            Días registrados: ${asistencia.totalDias ?? 0}
-          </p>
-        </div>
-      </section>
-    `;
-
-    document.getElementById("resultado").innerHTML = `
-      <div class="exito">
-
-        <h2>${datos.alumno.nombre}</h2>
-        <p><strong>Grupo:</strong> ${datos.alumno.grupo}</p>
-
-        <h2>📚 Mi avance académico</h2>
-        <h3>Actividades revisadas: ${datos.porcentaje}%</h3>
-
-        <p>
-          ✅ Revisadas: ${datos.revisadas}
-          <br>
-          ⏳ Pendientes: ${datos.pendientes}
-          <br>
-          📚 Total: ${datos.total}
-        </p>
-
-        ${asistenciaHtml}
-
-        <h2>Detalle de actividades</h2>
-        ${lista}
-
-      </div>
-    `;
-  })
-  .catch(error => {
-
-    console.error("Error al consultar el avance:", error);
-
-    document.getElementById("resultado").innerHTML = `
-      <div class="error">
-        Error al consultar el avance y la asistencia.
-        Intenta nuevamente.
-      </div>
-    `;
-  });
-}
-
-    function revisarAlumnoDesdeURL() {
-
-  const parametros = new URLSearchParams(window.location.search);
-  const alumno = parametros.get("alumno");
-
- if (alumno) {
-
-    document.getElementById("botonProfesor").style.display = "none";
-    document.getElementById("botonAlumno").style.display = "none";
-  document.getElementById("botonActividades").style.display = "none";
- 
-    consultarAvanceAlumno(alumno);
-}
-
-}
- window.addEventListener("load", revisarAlumnoDesdeURL);   
-
-    revisarAlumnoDesdeURL();
-
-    function seleccionarGrupo(turno) {
-      turnoSeleccionado = turno;
-    document.getElementById("resultado").innerHTML = `
-        <div class="cargando">
-            <h2>Selecciona el grupo</h2>
-
-           <button class="boton" onclick="seleccionarActividadGrupo('1°A')">1° A</button>
-<button class="boton" onclick="seleccionarActividadGrupo('1°B')">1° B</button>
-<button class="boton" onclick="seleccionarActividadGrupo('1°C')">1° C</button>
-
-<button class="boton" onclick="seleccionarActividadGrupo('2°A')">2° A</button>
-<button class="boton" onclick="seleccionarActividadGrupo('2°B')">2° B</button>
-<button class="boton" onclick="seleccionarActividadGrupo('2°C')">2° C</button>
-
-<button class="boton" onclick="seleccionarActividadGrupo('3°A')">3° A</button>
-<button class="boton" onclick="seleccionarActividadGrupo('3°B')">3° B</button>
-<button class="boton" onclick="seleccionarActividadGrupo('3°C')">3° C</button>
-        </div>
-    `;
-}
-
-    function regresarAActividades() {
-  const grupo = grupoSeleccionado;
-  const resultadoDiv = document.getElementById("resultado");
-
-  if (actividadesGuardadas.length > 0) {
-
-    const actividadesGrupo = actividadesGuardadas.filter(a =>
-      String(a.grupo).trim() === String(grupo).trim() ||
-      String(a.grupo).trim() === ""
-    );
-
-    let html = `
-      <div class="cargando">
-        <h2>Selecciona la actividad</h2>
-        <p>Grupo: ${grupo}</p>
-    `;
-
-    actividadesGrupo.forEach(actividad => {
-      html += `
-        <button class="boton" onclick="seleccionarActividad('${actividad.id}')">
-          ${actividad.materia} - ${actividad.actividad}
-        </button>
-      `;
-    });
-
-    html += `</div>`;
-    resultadoDiv.innerHTML = html;
-
-  } else {
-    seleccionarActividadGrupo(grupo);
-  }
-}
-
-    function seleccionarActividadGrupo(grupo) {
-      grupoSeleccionado = grupo;
-    const resultadoDiv = document.getElementById("resultado");
-
-    resultadoDiv.innerHTML = `
-        <div class="cargando">
-            <h2>Selecciona la actividad</h2>
-            <p>Grupo: ${grupo}</p>
-            <p>Buscando actividades...</p>
-        </div>
-    `;
-
-    const API_URL = "https://script.google.com/macros/s/AKfycbwD2VFs1QXroZ2vaquLJyP2thLeAkGOKP4lIoKY9xWeFlclRN4EL3p6RRbHztNAAKIxcQ/exec";
-
-    fetch(API_URL)
-        .then(response => response.json())
-        .then(actividades => {
-          actividadesGuardadas = actividades;
-
-            const actividadesGrupo = actividades.filter(a =>
-                String(a.grupo).trim() === String(grupo).trim() ||
-                String(a.grupo).trim() === ""
-            );
-
-            if (actividadesGrupo.length === 0) {
-                resultadoDiv.innerHTML = `
-                    <div class="error">
-                        No hay actividades registradas para el grupo ${grupo}.
-                    </div>
-                `;
-                return;
-            }
-
-            let html = `
-                <div class="cargando">
-                    <h2>Selecciona la actividad</h2>
-                    <p>Grupo: ${grupo}</p>
-            `;
-
-            actividadesGrupo.forEach(actividad => {
-                html += `
-                    <button class="boton" onclick="seleccionarActividad('${actividad.id}')">
-                        ${actividad.materia} - ${actividad.actividad}
-                    </button>
-                `;
-            });
-
-            html += `</div>`;
-
-            resultadoDiv.innerHTML = html;
-        })
-        .catch(error => {
-            resultadoDiv.innerHTML = `
-                <div class="error">
-                    Error al cargar las actividades: ${error.message}
-                </div>
-            `;
-        });
-}
-    
-function seleccionarTurno() {
-    document.getElementById("resultado").innerHTML = `
-        <div class="cargando">
-            <h2>Selecciona el turno</h2>
-
-            <button class="boton" onclick="turnoSeleccionado='M'; seleccionarGrupo('M')">
-                ☀️ MATUTINO
-            </button>
-
-            <button class="boton" onclick="turnoSeleccionado='V'; seleccionarGrupo('V')">
-                🌙 VESPERTINO
-            </button>
-        </div>
-    `;
-}
-    
-  </script>
-
-</body>
-</html>
+      
+    </script>
+  
+  </body>
+  </html>
