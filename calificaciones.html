@@ -66,11 +66,15 @@
     </div>
     <div>
       <label for="grupo">Grupo</label>
-      <input id="grupo" placeholder="Ej. 1°A" required>
+      <select id="grupo" onchange="cargarMaterias()" required>
+  <option value="">Cargando grupos...</option>
+</select>
     </div>
     <div>
       <label for="materia">Materia</label>
-      <input id="materia" placeholder="Escribe el nombre exacto" required>
+     <select id="materia" required>
+  <option value="">Primero selecciona un grupo</option>
+</select>
     </div>
     <div>
       <label for="trimestre">Trimestre</label>
@@ -120,7 +124,85 @@ async function enviar(datos) {
   return await respuesta.json();
 }
 
-async function consultar() {
+async function cargarGrupos() {
+  const selectorGrupo = document.getElementById("grupo");
+  const selectorMateria = document.getElementById("materia");
+
+  selectorGrupo.innerHTML = '<option value="">Cargando grupos...</option>';
+  selectorMateria.innerHTML = '<option value="">Primero selecciona un grupo</option>';
+
+  try {
+    const resultado = await enviar({
+      accion: "obtenerOpcionesCalificaciones",
+      turno: valor("turno")
+    });
+
+    if (!resultado.success) {
+      throw new Error(resultado.mensaje || "No se pudieron cargar los grupos.");
+    }
+
+    selectorGrupo.innerHTML = '<option value="">Selecciona un grupo</option>';
+
+    (resultado.grupos || []).forEach(grupo => {
+      const opcion = document.createElement("option");
+      opcion.value = grupo;
+      opcion.textContent = grupo;
+      selectorGrupo.appendChild(opcion);
+    });
+
+    if (!resultado.grupos || resultado.grupos.length === 0) {
+      selectorGrupo.innerHTML = '<option value="">No hay grupos disponibles</option>';
+    }
+  } catch (error) {
+    selectorGrupo.innerHTML = '<option value="">Error al cargar grupos</option>';
+    estado("No se pudieron cargar los grupos: " + error.message);
+  }
+}
+
+async function cargarMaterias() {
+  const grupo = valor("grupo");
+  const selectorMateria = document.getElementById("materia");
+
+  selectorMateria.innerHTML = '<option value="">Cargando materias...</option>';
+
+  if (!grupo) {
+    selectorMateria.innerHTML = '<option value="">Primero selecciona un grupo</option>';
+    return;
+  }
+
+  try {
+    const resultado = await enviar({
+      accion: "obtenerOpcionesCalificaciones",
+      turno: valor("turno"),
+      grupo: grupo
+    });
+
+    if (!resultado.success) {
+      throw new Error(resultado.mensaje || "No se pudieron cargar las materias.");
+    }
+
+    selectorMateria.innerHTML = '<option value="">Selecciona una materia</option>';
+
+    (resultado.materias || []).forEach(materia => {
+      const opcion = document.createElement("option");
+      opcion.value = materia;
+      opcion.textContent = materia;
+      selectorMateria.appendChild(opcion);
+    });
+
+    if (!resultado.materias || resultado.materias.length === 0) {
+      selectorMateria.innerHTML = '<option value="">No hay materias para este grupo</option>';
+    }
+  } catch (error) {
+    selectorMateria.innerHTML = '<option value="">Error al cargar materias</option>';
+    estado("No se pudieron cargar las materias: " + error.message);
+  }
+}
+
+document.getElementById("turno").addEventListener("change", cargarGrupos);
+document.addEventListener("DOMContentLoaded", cargarGrupos);
+ 
+ async function consultar() {
   const grupo = valor("grupo");
   const materia = valor("materia");
 
