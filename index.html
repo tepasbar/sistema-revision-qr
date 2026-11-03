@@ -1068,6 +1068,7 @@
   }
 
 
+
 async function registrarActividadesSeleccionadas() {
   const trimestreSeleccionado =
     localStorage.getItem("trimestreSeleccionadoQR") || "1";
@@ -1083,6 +1084,7 @@ async function registrarActividadesSeleccionadas() {
 
   const registros = [];
 
+  // Validar todas las actividades antes de enviar.
   for (const checkbox of seleccionadas) {
     const indice = checkbox.dataset.indice;
 
@@ -1098,7 +1100,7 @@ async function registrarActividadesSeleccionadas() {
     const campo = document.getElementById(`calificacion_${indice}`);
 
     if (!campo || campo.value.trim() === "") {
-      alert(`Escribe la calificación de ${actividad.actividad}.`);
+      alert("Captura la calificación de cada actividad seleccionada.");
       campo?.focus();
       return;
     }
@@ -1106,7 +1108,7 @@ async function registrarActividadesSeleccionadas() {
     const nota = Number(campo.value);
 
     if (!Number.isFinite(nota) || nota < 0 || nota > 10) {
-      alert(`La calificación de ${actividad.actividad} debe estar entre 0 y 10.`);
+      alert("Las calificaciones deben estar entre 0 y 10.");
       campo.focus();
       return;
     }
@@ -1114,19 +1116,22 @@ async function registrarActividadesSeleccionadas() {
     let materia = String(actividad.materia || "").trim();
 
     if (!materia) {
-      const selector = document.getElementById(`materia_general_${indice}`);
+      const selector = document.getElementById(
+        `materia_general_${indice}`
+      );
+
       materia = String(selector?.value || "").trim();
 
       if (!materia) {
-        alert(`Selecciona la materia de ${actividad.actividad}.`);
+        alert("Selecciona la materia para la actividad general.");
         selector?.focus();
         return;
       }
     }
 
     registros.push({
-      actividad,
-      materia,
+      actividadId: actividad.id,
+      materia: materia,
       calificacion: nota
     });
   }
@@ -1134,112 +1139,60 @@ async function registrarActividadesSeleccionadas() {
   const resultado = document.getElementById("resultado");
 
   resultado.innerHTML = `
-    <div class="cargando">
-      <h2>Guardando calificaciones...</h2>
-      <p>Espera un momento.</p>
-    </div>
+    <p>Guardando ${registros.length} calificación(es), espera...</p>
   `;
 
-  const API_URL = "https://script.google.com/macros/s/AKfycbwD2VFs1QXroZ2vaquLJyP2thLeAkGOKP4lIoKY9xWeFlclRN4EL3p6RRbHztNAAKIxcQ/exec";
+  const API_URL =
+    "https://script.google.com/macros/s/AKfycbwD2VFs1QXroZ2vaquLJyP2thLeAkGOKP4lIoKY9xWeFlclRN4EL3p6RRbHztNAAKIxcQ/exec";
 
   try {
+    // Una sola solicitud para guardar todas las calificaciones y revisiones.
     const respuesta = await fetch(API_URL, {
       method: "POST",
       body: JSON.stringify({
-        accion: "avance",
-        alumno: alumnoSeleccionado
+        accion: "guardarCalificacionesEnBloque",
+        alumnoId: alumnoSeleccionado,
+        trimestre: trimestreSeleccionado,
+        registros: registros
       })
     });
 
     const datos = await respuesta.json();
 
-    if (!datos.alumno) {
-      throw new Error(datos.mensaje || "No se encontró al alumno.");
+    if (!datos.success) {
+      throw new Error(
+        datos.mensaje || "No fue posible guardar las calificaciones."
+      );
     }
 
-    const alumno = datos.alumno;
-    const grupo = String(alumno.grupo || "").trim();
-    const turno = String(alumno.turno || "").trim();
-
-    if (!alumno.id || !grupo || !turno) {
-      throw new Error("Faltan los datos del alumno, grupo o turno.");
-    }
-
-    for (const registro of registros) {
-      const respuestaNota = await fetch(API_URL, {
-        method: "POST",
-        body: JSON.stringify({
-          accion: "guardarCalificacion",
-          alumnoId: alumno.id,
-          grupo,
-          turno,
-          materia: registro.materia,
-          actividadId: registro.actividad.id,
-          trimestre: trimestreSeleccionado,
-          calificacion: registro.calificacion
-        })
-      });
-
-      const resultadoNota = await respuestaNota.json();
-
-      if (!resultadoNota.success) {
-        throw new Error(
-          resultadoNota.mensaje ||
-          `No se pudo guardar ${registro.actividad.actividad}.`
-        );
-      }
-    }
-
-for (const registro of registros) {
-  const respuestaRevision = await fetch(API_URL, {
-    method: "POST",
-    body: JSON.stringify({
-      alumno: alumnoSeleccionado,
-      actividad: registro.actividad,
-      materia: registro.materia,
-      trimestre: trimestreSeleccionado
-    })
-  });
-
-  const datosRevision = await respuestaRevision.json();
-
-  if (!datosRevision.success) {
-    throw new Error(
-      datosRevision.mensaje || "No se pudo registrar la revisión."
-    );
-  }
-}
-    
     resultado.innerHTML = `
-      <div class="exito">
-        <h2>✓ Calificaciones guardadas</h2>
-        <p>Alumno: <strong>${alumno.nombre}</strong></p>
-        <p>Grupo: <strong>${grupo}</strong></p>
-        <p>Trimestre: <strong>${trimestreSeleccionado}</strong></p>
-        <p>Calificaciones guardadas: <strong>${registros.length}</strong></p>
+  <div class="exito">
+    <h2>✓ Calificaciones guardadas</h2>
+    <p>Se guardaron correctamente ${datos.total} calificación(es).</p>
 
-        <button onclick="iniciarEscaner()" class="boton-escanear">
-          📷 Escanear siguiente alumno
-        </button>
+    <button onclick="iniciarEscaner()" class="boton-escanear">
+      📷 Escanear siguiente alumno
+    </button>
 
-        <button
-          onclick="seleccionarActividadGrupo(grupoSeleccionado)"
-          class="boton-regresar"
-          style="display:block;margin-top:15px;">
-          ← Regresar a actividades
-        </button>
-      </div>
-    `;
+    <button
+      onclick="seleccionarActividadGrupo(grupoSeleccionado)"
+      class="boton-regresar"
+      style="display:block;margin-top:15px;">
+      ← Regresar a actividades
+    </button>
+  </div>
+`;
+
   } catch (error) {
-    console.error(error);
+    console.error("Error al guardar:", error);
 
     resultado.innerHTML = `
-      <div class="error">
-        <h2>Error al guardar</h2>
-        <p>${error.message}</p>
-        <p>Comprueba las calificaciones antes de volver a intentar, porque algunas podrían haberse guardado.</p>
-      </div>
-    `;
+  <div class="error">
+    <h2>Error al guardar</h2>
+    <p>${error.message}</p>
+    <p>Verifica la conexión e inténtalo nuevamente.</p>
+  </div>
+`;
   }
 }
 
