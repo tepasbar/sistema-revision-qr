@@ -1099,13 +1099,14 @@ async function registrarActividadesSeleccionadas() {
 
     const campo = document.getElementById(`calificacion_${indice}`);
 
-    if (!campo || campo.value.trim() === "") {
-      alert("Captura la calificación de cada actividad seleccionada.");
-      campo?.focus();
-      return;
-    }
+    if (!campo) {
+  alert("No se encontró el campo de calificación.");
+  return;
+}
 
-    const nota = Number(campo.value);
+const nota = campo.value.trim() === ""
+  ? 10
+  : Number(campo.value);
 
     if (!Number.isFinite(nota) || nota < 0 || nota > 10) {
       alert("Las calificaciones deben estar entre 0 y 10.");
