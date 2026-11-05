@@ -352,7 +352,9 @@
   
   }
   
-      cargarActividades();
+     if (!new URLSearchParams(window.location.search).has("alumno")) {
+  cargarActividades();
+}
   
   
   var streamQR = null;
