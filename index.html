@@ -634,11 +634,11 @@
   
     fetch(API_URL, {
       method: "POST",
-      body: JSON.stringify({
-        accion: "avance",
-        alumno: codigoAlumno
-      })
-    })
+     body: JSON.stringify({
+  accion: "avance",
+  alumno: codigoAlumno,
+  trimestre: localStorage.getItem("trimestreSeleccionadoQR") || "1"
+})
     .then(response => response.json())
     .then(datos => {
       if (!datos.alumno) {
@@ -670,15 +670,31 @@
       `;
   
       actividadesGuardadas.forEach((actividad, indice) => {
-        const revisada = actividad.estado === "REVISADA";
         const materiaActividad = String(actividad.materia || "").trim();
-        const esGeneral = materiaActividad === "";
-  
-        const opcionesMateria = materiasDisponibles.map(materia => `
-          <option value="${materia.replace(/&/g, "&amp;").replace(/"/g, "&quot;").replace(/</g, "&lt;").replace(/>/g, "&gt;")}">
-            ${materia.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;")}
-          </option>
-        `).join("");
+const esGeneral = materiaActividad === "";
+const revisada = actividad.estado === "REVISADA";
+
+const materiasPendientes = Array.isArray(actividad.materiasPendientes)
+  ? actividad.materiasPendientes
+  : [];
+
+const materiasRevisadas = Array.isArray(actividad.materiasRevisadas)
+  ? actividad.materiasRevisadas
+  : [];
+
+const bloqueada = esGeneral
+  ? materiasPendientes.length === 0
+  : revisada;
+
+const materiasParaActividad = esGeneral
+  ? materiasPendientes
+  : [];
+
+const opcionesMateria = materiasParaActividad.map(materia => `
+  <option value="${materia.replace(/&/g, "&amp;").replace(/"/g, "&quot;").replace(/</g, "&lt;").replace(/>/g, "&gt;")}">
+    ${materia.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;")}
+  </option>
+`).join("");
   
         html += `
           <div class="actividad">
@@ -688,15 +704,20 @@
                 class="actividad-multiple"
                 value="${actividad.id}"
                 data-indice="${indice}"
-                ${revisada ? "checked disabled" : ""}
+               ${bloqueada ? "checked disabled" : ""}
                 style="width:auto;margin-right:8px;"
               >
               <strong>${esGeneral ? "ACTIVIDAD GENERAL" : materiaActividad}</strong>
               - ${actividad.actividad}
-              ${revisada ? " ✅ REVISADA" : ""}
+             ${bloqueada
+  ? (esGeneral ? " ✅ REVISADA EN TODAS LAS MATERIAS" : " ✅ REVISADA")
+  : (esGeneral && materiasRevisadas.length > 0
+      ? ` | Revisada en: ${materiasRevisadas.join(", ")}`
+      : "")
+}
             </label>
   
-            ${!revisada && esGeneral ? `
+          ${!bloqueada && esGeneral ? `
               <label for="materia_general_${indice}">
                 Materia para esta calificación
               </label>
@@ -711,7 +732,7 @@
               </select>
             ` : ""}
   
-            ${!revisada ? `
+        ${!bloqueada ? `
               <label for="calificacion_${indice}">
                 Calificación (0 a 10)
               </label>
