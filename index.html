@@ -639,6 +639,7 @@
   alumno: codigoAlumno,
   trimestre: localStorage.getItem("trimestreSeleccionadoQR") || "1"
 })
+})
     .then(response => response.json())
     .then(datos => {
       if (!datos.alumno) {
