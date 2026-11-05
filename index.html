@@ -798,9 +798,10 @@ const opcionesMateria = materiasParaActividad.map(materia => `
     fetch(API_URL, {
       method: "POST",
       body: JSON.stringify({
-        accion: "avance",
-        alumno: codigoAlumno
-      })
+  accion: "avance",
+  alumno: codigoAlumno,
+  trimestre: localStorage.getItem("trimestreSeleccionadoQR") || "1"
+})
     })
     .then(response => response.json())
     .then(datos => {
