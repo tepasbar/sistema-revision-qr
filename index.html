@@ -138,6 +138,10 @@
     <button id="botonAlumno" class="boton-qr" onclick="modoEscaneo = 'consulta'; iniciarEscaner()">
     👤 Consultar avance del alumno
   </button>
+
+        <button id="botonEvaluacionIntegral" onclick="abrirEvaluacionIntegral()">
+  Evaluación integral
+</button>
   
         <div id="resultado" class="cargando">
           Cargando actividades...
@@ -953,6 +957,7 @@ const opcionesMateria = materiasParaActividad.map(materia => `
       document.getElementById("botonProfesor").style.display = "none";
       document.getElementById("botonAlumno").style.display = "none";
     document.getElementById("botonActividades").style.display = "none";
+     document.getElementById("botonEvaluacionIntegral").style.display = "none";
    
       consultarAvanceAlumno(alumno);
   }
