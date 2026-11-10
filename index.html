@@ -1227,6 +1227,261 @@ const nota = campo.value.trim() === ""
   }
 }
 
+     
+// ==========================================
+// EVALUACIÓN INTEGRAL
+// ==========================================
+
+function abrirEvaluacionIntegral() {
+  document.getElementById("resultado").innerHTML = `
+    <button class="boton-regresar" onclick="cargarActividades()">
+      ← Regresar
+    </button>
+
+    <h2>Evaluación integral</h2>
+
+    <p>Selecciona los datos del grupo que deseas evaluar.</p>
+
+    <label>Turno</label>
+    <select id="evalTurno" style="width:100%;padding:10px;margin:8px 0;">
+      <option value="">Selecciona turno</option>
+      <option value="MATUTINO">MATUTINO</option>
+      <option value="VESPERTINO">VESPERTINO</option>
+    </select>
+
+    <label>Grupo</label>
+    <select id="evalGrupo" style="width:100%;padding:10px;margin:8px 0;">
+      <option value="">Primero selecciona el turno</option>
+    </select>
+
+    <label>Materia</label>
+    <select id="evalMateria" style="width:100%;padding:10px;margin:8px 0;">
+      <option value="">Selecciona grupo primero</option>
+    </select>
+
+    <label>Trimestre</label>
+    <select id="evalTrimestre" style="width:100%;padding:10px;margin:8px 0;">
+      <option value="1">Trimestre 1</option>
+      <option value="2">Trimestre 2</option>
+      <option value="3">Trimestre 3</option>
+    </select>
+
+    <button class="boton" onclick="cargarAlumnosEvaluacion()">
+      Consultar alumnos
+    </button>
+
+    <div id="tablaEvaluacion"></div>
+  `;
+
+  document.getElementById("evalTurno").addEventListener("change", cargarOpcionesEvaluacion);
+  document.getElementById("evalGrupo").addEventListener("change", cargarMateriasEvaluacion);
+}
+
+function cargarOpcionesEvaluacion() {
+  const turno = document.getElementById("evalTurno").value;
+  const grupoSelect = document.getElementById("evalGrupo");
+  const materiaSelect = document.getElementById("evalMateria");
+
+  grupoSelect.innerHTML = '<option value="">Cargando grupos...</option>';
+  materiaSelect.innerHTML = '<option value="">Selecciona grupo primero</option>';
+
+  if (!turno) return;
+
+  const API_URL = "https://script.google.com/macros/s/AKfycbwD2VFs1QXroZ2vaquLJyP2thLeAkGOKP4lIoKY9xWeFlclRN4EL3p6RRbHztNAAKIxcQ/exec";
+
+  fetch(API_URL, {
+    method: "POST",
+    body: JSON.stringify({
+      accion: "obtenerOpcionesCalificaciones",
+      turno: turno,
+      grupo: ""
+    })
+  })
+  .then(r => r.json())
+  .then(datos => {
+    grupoSelect.innerHTML = '<option value="">Selecciona grupo</option>';
+
+    (datos.grupos || []).forEach(grupo => {
+      grupoSelect.innerHTML += `<option value="${grupo}">${grupo}</option>`;
+    });
+  })
+  .catch(error => {
+    grupoSelect.innerHTML = '<option value="">Error al cargar grupos</option>';
+    console.error(error);
+  });
+}
+
+function cargarMateriasEvaluacion() {
+  const turno = document.getElementById("evalTurno").value;
+  const grupo = document.getElementById("evalGrupo").value;
+  const materiaSelect = document.getElementById("evalMateria");
+
+  materiaSelect.innerHTML = '<option value="">Cargando materias...</option>';
+
+  if (!grupo) return;
+
+  const API_URL = "https://script.google.com/macros/s/AKfycbwD2VFs1QXroZ2vaquLJyP2thLeAkGOKP4lIoKY9xWeFlclRN4EL3p6RRbHztNAAKIxcQ/exec";
+
+  fetch(API_URL, {
+    method: "POST",
+    body: JSON.stringify({
+      accion: "obtenerOpcionesCalificaciones",
+      turno: turno,
+      grupo: grupo
+    })
+  })
+  .then(r => r.json())
+  .then(datos => {
+    materiaSelect.innerHTML = '<option value="">Selecciona materia</option>';
+
+    (datos.materias || []).forEach(materia => {
+      materiaSelect.innerHTML += `<option value="${materia}">${materia}</option>`;
+    });
+  })
+  .catch(error => {
+    materiaSelect.innerHTML = '<option value="">Error al cargar materias</option>';
+    console.error(error);
+  });
+}
+
+function cargarAlumnosEvaluacion() {
+  const turno = document.getElementById("evalTurno").value;
+  const grupo = document.getElementById("evalGrupo").value;
+  const materia = document.getElementById("evalMateria").value;
+  const trimestre = document.getElementById("evalTrimestre").value;
+  const tabla = document.getElementById("tablaEvaluacion");
+
+  if (!turno || !grupo || !materia) {
+    alert("Selecciona turno, grupo y materia.");
+    return;
+  }
+
+  tabla.innerHTML = '<p class="cargando">Consultando alumnos...</p>';
+
+  const API_URL = "https://script.google.com/macros/s/AKfycbwD2VFs1QXroZ2vaquLJyP2thLeAkGOKP4lIoKY9xWeFlclRN4EL3p6RRbHztNAAKIxcQ/exec";
+
+  fetch(API_URL, {
+    method: "POST",
+    body: JSON.stringify({
+      accion: "obtenerDatosEvaluacionIntegral",
+      turno: turno,
+      grupo: grupo,
+      materia: materia,
+      trimestre: trimestre
+    })
+  })
+  .then(r => r.json())
+  .then(datos => {
+    if (!datos.success) throw new Error(datos.mensaje || "No se pudieron consultar los alumnos.");
+
+    mostrarTablaEvaluacion(datos.alumnos || []);
+  })
+  .catch(error => {
+    tabla.innerHTML = `<div class="error">${error.message}</div>`;
+  });
+}
+
+function mostrarTablaEvaluacion(alumnos) {
+  const tabla = document.getElementById("tablaEvaluacion");
+
+  if (!alumnos.length) {
+    tabla.innerHTML = '<p>No hay alumnos en este grupo.</p>';
+    return;
+  }
+
+  let html = `
+    <h3>Registro de evaluación</h3>
+    <p><strong>Actividades y proyectos:</strong> 60%</p>
+    <p>Participación individual: 15% | Participación en equipo: 10% | Conducta: 15%</p>
+  `;
+
+  alumnos.forEach((a, i) => {
+    html += `
+      <div class="actividad">
+        <h3>${i + 1}. ${a.nombre}</h3>
+        <p><strong>ID:</strong> ${a.id}</p>
+        <p><strong>Promedio de actividades (60%):</strong>
+          ${a.promedioActividades === null ? "PENDIENTE" : a.promedioActividades}
+        </p>
+
+        <label>Participación individual (0 a 10)</label>
+        <input type="number" id="evalInd_${i}" min="0" max="10" step="0.1"
+          value="${a.participacionIndividual ?? ""}"
+          style="width:100%;padding:9px;margin:5px 0 12px;">
+
+        <label>Participación en equipo (0 a 10)</label>
+        <input type="number" id="evalEquipo_${i}" min="0" max="10" step="0.1"
+          value="${a.participacionEquipo ?? ""}"
+          style="width:100%;padding:9px;margin:5px 0 12px;">
+
+        <label>Conducta (0 a 10)</label>
+        <input type="number" id="evalConducta_${i}" min="0" max="10" step="0.1"
+          value="${a.conducta ?? ""}"
+          style="width:100%;padding:9px;margin:5px 0 12px;">
+
+        <p><strong>Calificación final:</strong>
+          ${a.calificacionFinal === null ? "PENDIENTE" : a.calificacionFinal}
+        </p>
+
+        <button class="boton" onclick="guardarFilaEvaluacion(${i})">
+          Guardar evaluación
+        </button>
+
+        <span id="estadoEval_${i}">${a.estado}</span>
+      </div>
+    `;
+  });
+
+  tabla.innerHTML = html;
+  window.alumnosEvaluacionActual = alumnos;
+}
+
+function guardarFilaEvaluacion(indice) {
+  const alumno = window.alumnosEvaluacionActual[indice];
+
+  const individual = document.getElementById(`evalInd_${indice}`).value;
+  const equipo = document.getElementById(`evalEquipo_${indice}`).value;
+  const conducta = document.getElementById(`evalConducta_${indice}`).value;
+  const estado = document.getElementById(`estadoEval_${indice}`);
+
+  const notas = [individual, equipo, conducta];
+
+  if (notas.some(n => n === "" || !Number.isFinite(Number(n)) || Number(n) < 0 || Number(n) > 10)) {
+    alert("Captura los tres criterios con calificaciones de 0 a 10.");
+    return;
+  }
+
+  estado.textContent = "Guardando...";
+
+  const API_URL = "https://script.google.com/macros/s/AKfycbwD2VFs1QXroZ2vaquLJyP2thLeAkGOKP4lIoKY9xWeFlclRN4EL3p6RRbHztNAAKIxcQ/exec";
+
+  fetch(API_URL, {
+    method: "POST",
+    body: JSON.stringify({
+      accion: "guardarEvaluacionIntegral",
+      alumnoId: alumno.id,
+      grupo: alumno.grupo,
+      turno: alumno.turno,
+      materia: document.getElementById("evalMateria").value,
+      trimestre: document.getElementById("evalTrimestre").value,
+      participacionIndividual: individual,
+      participacionEquipo: equipo,
+      conducta: conducta
+    })
+  })
+  .then(r => r.json())
+  .then(datos => {
+    if (!datos.success) throw new Error(datos.mensaje || "No se pudo guardar.");
+
+    estado.textContent = "GUARDADA";
+    cargarAlumnosEvaluacion();
+  })
+  .catch(error => {
+    estado.textContent = "Error al guardar";
+    alert(error.message);
+  });
+}
+ 
       
     </script>
   
