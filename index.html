@@ -1469,7 +1469,10 @@ function guardarFilaEvaluacion(indice) {
       conducta: conducta
     })
   })
-  .then(r => r.json())
+ .then(r => r.text().then(texto => {
+  console.log("RESPUESTA DEL SERVIDOR:", texto);
+  return JSON.parse(texto);
+}))
   .then(datos => {
     if (!datos.success) throw new Error(datos.mensaje || "No se pudo guardar.");
 
