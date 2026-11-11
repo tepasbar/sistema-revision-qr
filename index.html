@@ -1375,8 +1375,15 @@ function cargarAlumnosEvaluacion() {
   return JSON.parse(texto);
 }))
   .then(datos => {
-    if (!datos.success) throw new Error(datos.mensaje || "No se pudieron consultar los alumnos.");
-
+    
+  if (!datos.success) {
+  throw new Error(
+    "VERSIÓN SERVIDOR: " +
+    (datos.versionServidor || "SIN IDENTIFICACIÓN") +
+    " | ERROR: " +
+    (datos.mensaje || "No se pudieron consultar los alumnos.")
+  );
+}
     mostrarTablaEvaluacion(datos.alumnos || []);
   })
   .catch(error => {
