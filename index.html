@@ -827,6 +827,32 @@ const opcionesMateria = materiasParaActividad.map(materia => `
   }));
   
       const asistencia = datos.asistencia || {};
+
+      const calificacionFinal = datos.calificacionFinalTrimestre1;
+
+const calificacionFinalHtml = `
+  <section style="
+    margin:20px 0;
+    padding:20px;
+    background:#e8f0fe;
+    border-radius:12px;
+    text-align:center;
+    border:1px solid #c6dafc;
+  ">
+    <h2 style="margin-top:0;">
+      CALIFICACIÓN FINAL 1° TRIMESTRE
+    </h2>
+    <div style="font-size:32px;font-weight:bold;color:#1967d2;">
+      ${
+        calificacionFinal === null ||
+        calificacionFinal === undefined ||
+        calificacionFinal === ""
+          ? "Sin calificación registrada"
+          : calificacionFinal
+      }
+    </div>
+  </section>
+`;
   
       console.log("Respuesta completa:", datos);
   console.log("Asistencia recibida:", datos.asistencia);
@@ -914,6 +940,8 @@ const opcionesMateria = materiasParaActividad.map(materia => `
   
           <h2>${datos.alumno.nombre}</h2>
           <p><strong>Grupo:</strong> ${datos.alumno.grupo}</p>
+
+          ${calificacionFinalHtml}
   
           <h2>📚 Mi avance académico</h2>
           <h3>Actividades revisadas: ${datos.porcentaje}%</h3>
