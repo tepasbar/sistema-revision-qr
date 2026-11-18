@@ -123,6 +123,22 @@
       <div class="encabezado">
         <h1>SISTEMA DE REVISIÓN QR</h1>
         <p>Consulta de actividades</p>
+
+        <div style="margin: 15px 0; text-align: center;">
+  <label for="selectorTrimestre" style="font-weight: bold;">
+    TRIMESTRE:
+  </label>
+
+  <select
+    id="selectorTrimestre"
+    onchange="cambiarTrimestre(this.value)"
+    style="padding: 10px; margin-left: 8px; border-radius: 6px; font-size: 16px;"
+  >
+    <option value="1">Primer trimestre</option>
+    <option value="2">Segundo trimestre</option>
+    <option value="3">Tercer trimestre</option>
+  </select>
+</div>
       </div>
   
       <div class="contenido">
