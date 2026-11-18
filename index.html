@@ -188,7 +188,9 @@
   
     const API_URL = "https://script.google.com/macros/s/AKfycbwD2VFs1QXroZ2vaquLJyP2thLeAkGOKP4lIoKY9xWeFlclRN4EL3p6RRbHztNAAKIxcQ/exec";
   
-    fetch(API_URL)
+   const trimestre = localStorage.getItem("trimestreSeleccionadoQR") || "1";
+fetch(API_URL + "?trimestre=" + trimestre)
+  
       .then(function(response) {
   
         if (!response.ok) {
@@ -300,7 +302,9 @@
   
     const API_URL = "https://script.google.com/macros/s/AKfycbwD2VFs1QXroZ2vaquLJyP2thLeAkGOKP4lIoKY9xWeFlclRN4EL3p6RRbHztNAAKIxcQ/exec";
   
-    fetch(API_URL)
+   const trimestre = localStorage.getItem("trimestreSeleccionadoQR") || "1";
+fetch(API_URL + "?trimestre=" + trimestre)
+  
       .then(response => response.json())
       .then(actividades => {
   
@@ -1063,7 +1067,9 @@ const calificacionFinalHtml = `
   
       const API_URL = "https://script.google.com/macros/s/AKfycbwD2VFs1QXroZ2vaquLJyP2thLeAkGOKP4lIoKY9xWeFlclRN4EL3p6RRbHztNAAKIxcQ/exec";
   
-      fetch(API_URL)
+     const trimestre = localStorage.getItem("trimestreSeleccionadoQR") || "1";
+fetch(API_URL + "?trimestre=" + trimestre)
+  
           .then(response => response.json())
           .then(actividades => {
             actividadesGuardadas = actividades;
