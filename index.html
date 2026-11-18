@@ -201,6 +201,11 @@ function cambiarTrimestre(trimestre) {
 }
       
      function cargarActividades() {
+
+       const trimestreGuardado =
+  localStorage.getItem("trimestreSeleccionadoQR") || "1";
+
+document.getElementById("selectorTrimestre").value = trimestreGuardado;
   
     const resultado = document.getElementById("resultado");
   
