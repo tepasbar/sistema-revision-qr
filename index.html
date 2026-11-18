@@ -194,7 +194,12 @@
       let grupoSeleccionado = "";
       let actividadesGuardadas = [];
       let alumnoSeleccionado = "";
-  
+
+function cambiarTrimestre(trimestre) {
+  localStorage.setItem("trimestreSeleccionadoQR", trimestre);
+  cargarActividades();
+}
+      
      function cargarActividades() {
   
     const resultado = document.getElementById("resultado");
